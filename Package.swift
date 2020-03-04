@@ -13,12 +13,14 @@ let package = Package(
             targets: ["ActionStatusCore"]),
     ],
     dependencies: [
-        .package(url: "http://github.com/elegantchaos/DictionaryCoding.git", from: "1.0.9")
+        .package(url: "https://github.com/elegantchaos/DictionaryCoding.git", from: "1.0.9"),
+        .package(url: "https://github.com/elegantchaos/Logger.git", from: "1.5.1"),
+        .package(url: "https://github.com/elegantchaos/Hardware.git", from: "1.0.0")
     ],
     targets: [
         .target(
             name: "ActionStatusCore",
-            dependencies: ["DictionaryCoding"]),
+            dependencies: ["DictionaryCoding", "Hardware", "Logger"]),
         .testTarget(
             name: "ActionStatusCoreTests",
             dependencies: ["ActionStatusCore", "DictionaryCoding"]),

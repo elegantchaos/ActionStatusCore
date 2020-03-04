@@ -3,8 +3,12 @@
 //  All code (c) 2020 - present day, Elegant Chaos Limited.
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import SwiftUI
 import DictionaryCoding
+import Logger
+import SwiftUI
+import Hardware
+
+let modelChannel = Channel("com.elegantchaos.actionstatus.Model")
 
 public class Model: ObservableObject {
     public typealias RepoList = [Repo]
@@ -89,14 +93,14 @@ public extension Model {
         }
         store.set(repoIDs, forKey: key)
     }
-
+    
     func refresh() {
         scheduleRefresh(after: 0)
     }
-        
+    
     func cancelRefresh() {
         if let timer = timer {
-            print("Cancelled refresh.")
+            modelChannel.log("Cancelled refresh.")
             timer.invalidate()
             self.timer = nil
         }
@@ -129,8 +133,8 @@ public extension Model {
             sortItems()
         }
     }
-     
-
+    
+    
     func remove(repo: Repo) {
         if let index = items.firstIndex(of: repo) {
             var updated = items
@@ -143,68 +147,79 @@ public extension Model {
 // MARK: Internal
 
 internal extension Model {
-      
-      @objc func modelChangedExternally() {
-          load(fromDefaultsKey: key)
-      }
-
-       func scheduleRefresh(after interval: TimeInterval) {
-           cancelRefresh()
-           print("Scheduled refresh for \(interval) seconds.")
-           timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in
-               self.doRefresh()
-           }
-       }
-       
-       func doRefresh() {
-           DispatchQueue.global(qos: .background).async {
-               print("Refreshing...")
-               var newState: [UUID: Repo.State] = [:]
-               for repo in self.items {
-                   newState[repo.id] = repo.checkState()
-               }
-               
-               DispatchQueue.main.async {
-                   print("Completed Refresh")
-                   
-                   for n in 0 ..< self.items.count {
-                       if let state = newState[self.items[n].id] {
-                           self.items[n].state = state
-                       }
-                   }
-
-                   self.sortItems()
-                   self.block?()
-                   self.scheduleRefresh(after: self.refreshInterval)
-               }
-           }
-       }
+    
+    @objc func modelChangedExternally() {
+        load(fromDefaultsKey: key)
+    }
+    
+    func scheduleRefresh(after interval: TimeInterval) {
+        cancelRefresh()
+        modelChannel.log("Scheduled refresh for \(interval) seconds.")
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in
+            self.doRefresh()
+        }
+    }
+    
+    func doRefresh() {
+        DispatchQueue.global(qos: .background).async {
+            modelChannel.log("Refreshing...")
+            var newState: [UUID: Repo.State] = [:]
+            for repo in self.items {
+                newState[repo.id] = repo.checkState()
+            }
+            
+            DispatchQueue.main.async {
+                modelChannel.log("Completed Refresh")
+                
+                for n in 0 ..< self.items.count {
+                    if let state = newState[self.items[n].id] {
+                        self.items[n].state = state
+                        switch state {
+                            case .passing: self.items[n].lastSucceeded = Date()
+                            case .failing: self.items[n].lastFailed = Date()
+                            default: break
+                        }
+                    }
+                }
+                
+                self.sortItems()
+                self.block?()
+                self.scheduleRefresh(after: self.refreshInterval)
+            }
+        }
+    }
     
     func sortItems() {
         self.items.sort { (r1, r2) -> Bool in
             if (r1.state == r2.state) {
                 return r1.name < r2.name
             }
-
+            
             return r1.state.rawValue < r2.state.rawValue
         }
     }
-
-     func add(fromGitRepo url: URL, detector: NSDataDetector) {
-         if let config = try? String(contentsOf: url.appendingPathComponent("config")) {
-             let tweaked = config.replacingOccurrences(of: "git@github.com:", with: "https://github.com/")
-             let range = NSRange(location: 0, length: tweaked.count)
-             for result in detector.matches(in: tweaked, options: [], range: range) {
-                 if let url = result.url, url.scheme == "https", url.host == "github.com" {
-                     let name = url.deletingPathExtension().lastPathComponent
-                     let owner = url.deletingLastPathComponent().lastPathComponent
-                     let existing = items.filter({ $0.name == name && $0.owner == owner })
-                     if existing.count == 0 {
-                         addRepo(name: name, owner: owner)
-                     }
-                 }
-             }
-         }
-     }
-
+    
+    func add(fromGitRepo url: URL, detector: NSDataDetector) {
+        if let config = try? String(contentsOf: url.appendingPathComponent("config")) {
+            let tweaked = config.replacingOccurrences(of: "git@github.com:", with: "https://github.com/")
+            let range = NSRange(location: 0, length: tweaked.count)
+            for result in detector.matches(in: tweaked, options: [], range: range) {
+                if let url = result.url, url.scheme == "https", url.host == "github.com" {
+                    let name = url.deletingPathExtension().lastPathComponent
+                    let owner = url.deletingLastPathComponent().lastPathComponent
+                    var repo = items.filter({ $0.name == name && $0.owner == owner }).first
+                    if repo == nil {
+                        repo = addRepo(name: name, owner: owner)
+                    }
+                    
+                    if let identifier = Device.main.identifier, var repo = repo {
+                        let path = url.deletingLastPathComponent().path
+                        repo.paths[identifier] = path
+                        modelChannel.log("Local path for \(repo.name) on machine \(identifier) is \(path).")
+                    }
+                }
+            }
+        }
+    }
+    
 }

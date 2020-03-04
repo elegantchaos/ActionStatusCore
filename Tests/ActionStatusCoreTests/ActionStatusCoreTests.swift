@@ -21,7 +21,8 @@ final class ActionStatusCoreTests: XCTestCase {
         ]
     ]
 
-    var version2: [String:Any] = [ // added `paths`
+    // Version 2 added `paths`, `lastFailed`, `lastSucceeded`
+    var version2: [String:Any] = [
         "name": "Name",
         "workflow": "Test",
         "state": 1,
@@ -33,18 +34,26 @@ final class ActionStatusCoreTests: XCTestCase {
         ],
         "paths": [
             "machine1": "path1"
-        ]
+        ],
+        "lastSucceeded" : 605020027.511168,
+        "lastFailed" : 605020027.511168,
     ]
 
     func outputRepo() {
         let settings = WorkflowSettings(options: ["test"])
-        let repo = Repo("Name", owner: "Owner", workflow: "Test", id: UUID(), state: .passing, branches: ["master"], settings: settings)
+        var repo = Repo("Name", owner: "Owner", workflow: "Test", id: UUID(), state: .passing, branches: ["master"], settings: settings)
+        repo.lastFailed = Date()
+        repo.lastSucceeded = Date()
         let encoder = DictionaryEncoder()
         if let dictionary: [String:Any] = try? encoder.encode(repo) {
             let data = try! JSONSerialization.data(withJSONObject: dictionary, options: [.prettyPrinted])
             let json = String(data: data, encoding: .utf8)!
             print(json)
         }
+    }
+    
+    func testOutput() {
+        outputRepo()
     }
     
     func testLoadVersion1Repo() {
@@ -66,6 +75,8 @@ final class ActionStatusCoreTests: XCTestCase {
             XCTAssertEqual(repo.branches, [ "master" ])
             XCTAssertEqual(repo.id, UUID(uuidString: "DBDD302B-B50A-47DC-AA5E-4FAF2FF8A01A"))
             XCTAssertEqual(repo.paths, [:])
+            XCTAssertNil(repo.lastSucceeded)
+            XCTAssertNil(repo.lastFailed)
         } catch {
             XCTFail("couldn't decode: \(error)")
         }
@@ -91,6 +102,9 @@ final class ActionStatusCoreTests: XCTestCase {
             XCTAssertEqual(repo.branches, [ "master" ])
             XCTAssertEqual(repo.id, UUID(uuidString: "DBDD302B-B50A-47DC-AA5E-4FAF2FF8A01A"))
             XCTAssertEqual(repo.paths, ["machine1":"path1"])
+            let expectedDate = Date(timeIntervalSinceReferenceDate: 605020027.511168)
+            XCTAssertEqual(repo.lastSucceeded, expectedDate)
+            XCTAssertEqual(repo.lastFailed, expectedDate)
         } catch {
             XCTFail("couldn't decode: \(error)")
         }

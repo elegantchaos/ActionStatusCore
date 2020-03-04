@@ -39,6 +39,8 @@ public struct Repo: Identifiable, Equatable {
     public var state: State
     public var settings: WorkflowSettings
     public var paths: [String:String]
+    public var lastFailed: Date?
+    public var lastSucceeded: Date?
     
     public init() {
         id = UUID()
@@ -101,7 +103,7 @@ public struct Repo: Identifiable, Equatable {
                     let svgState = state(fromSVG: svg)
                     if newState == .unknown {
                         newState = svgState
-                    } else if state == .failing {
+                    } else if svgState == .failing {
                         newState = .failing
                     }
             }
