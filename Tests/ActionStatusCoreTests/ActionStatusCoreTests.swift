@@ -21,6 +21,21 @@ final class ActionStatusCoreTests: XCTestCase {
         ]
     ]
 
+    var version2: [String:Any] = [ // added `paths`
+        "name": "Name",
+        "workflow": "Test",
+        "state": 1,
+        "branches": [ "master" ],
+        "owner": "Owner",
+        "id": "DBDD302B-B50A-47DC-AA5E-4FAF2FF8A01A",
+        "settings": [
+            "options": [ "test" ]
+        ],
+        "paths": [
+            "machine1": "path1"
+        ]
+    ]
+
     func outputRepo() {
         let settings = WorkflowSettings(options: ["test"])
         let repo = Repo("Name", owner: "Owner", workflow: "Test", id: UUID(), state: .passing, branches: ["master"], settings: settings)
@@ -50,17 +65,36 @@ final class ActionStatusCoreTests: XCTestCase {
             XCTAssertEqual(repo.state, .passing)
             XCTAssertEqual(repo.branches, [ "master" ])
             XCTAssertEqual(repo.id, UUID(uuidString: "DBDD302B-B50A-47DC-AA5E-4FAF2FF8A01A"))
+            XCTAssertEqual(repo.paths, [:])
         } catch {
             XCTFail("couldn't decode: \(error)")
         }
         
     }
 
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    func testLoadVersion2Repo() {
+        typealias LocalPathDictionary = [String:String]
+        
+        let decoder = DictionaryDecoder()
+        let defaults: [String:Any] = [
+            String(describing: LocalPathDictionary.self): LocalPathDictionary()
+        ]
+            
+        decoder.missingValueDecodingStrategy = .useDefault(defaults: defaults)
+        
+        do {
+            let repo = try decoder.decode(Repo.self, from: version2)
+            XCTAssertEqual(repo.name, "Name")
+            XCTAssertEqual(repo.owner, "Owner")
+            XCTAssertEqual(repo.workflow, "Test")
+            XCTAssertEqual(repo.state, .passing)
+            XCTAssertEqual(repo.branches, [ "master" ])
+            XCTAssertEqual(repo.id, UUID(uuidString: "DBDD302B-B50A-47DC-AA5E-4FAF2FF8A01A"))
+            XCTAssertEqual(repo.paths, ["machine1":"path1"])
+        } catch {
+            XCTFail("couldn't decode: \(error)")
         }
+        
     }
 
 }
