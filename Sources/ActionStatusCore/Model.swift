@@ -66,13 +66,16 @@ public extension Model {
     }
     
     func load(fromDefaultsKey key: String) {
-        let decoder = DictionaryDecoder()
+        let decoder = Repo.dictionaryDecoder
         if let repoIDs = store.array(forKey: key) as? Array<String> {
             var loadedRepos: [Repo] = []
             for repoID in repoIDs {
                 if let dict = store.dictionary(forKey: repoID) {
-                    if let repo = try? decoder.decode(Repo.self, from: dict) {
+                    do {
+                        let repo = try decoder.decode(Repo.self, from: dict)
                         loadedRepos.append(repo)
+                    } catch {
+                        modelChannel.log("Failed to restore repo data from \(dict).\n\nError:\(error)")
                     }
                 }
             }

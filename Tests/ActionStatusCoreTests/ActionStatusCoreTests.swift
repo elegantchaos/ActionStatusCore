@@ -57,15 +57,7 @@ final class ActionStatusCoreTests: XCTestCase {
     }
     
     func testLoadVersion1Repo() {
-        typealias LocalPathDictionary = [String:String]
-        
-        let decoder = DictionaryDecoder()
-        let defaults: [String:Any] = [
-            String(describing: LocalPathDictionary.self): LocalPathDictionary()
-        ]
-            
-        decoder.missingValueDecodingStrategy = .useDefault(defaults: defaults)
-        
+        let decoder = Repo.dictionaryDecoder
         do {
             let repo = try decoder.decode(Repo.self, from: version1)
             XCTAssertEqual(repo.name, "Name")
@@ -84,15 +76,7 @@ final class ActionStatusCoreTests: XCTestCase {
     }
 
     func testLoadVersion2Repo() {
-        typealias LocalPathDictionary = [String:String]
-        
-        let decoder = DictionaryDecoder()
-        let defaults: [String:Any] = [
-            String(describing: LocalPathDictionary.self): LocalPathDictionary()
-        ]
-            
-        decoder.missingValueDecodingStrategy = .useDefault(defaults: defaults)
-        
+        let decoder = Repo.dictionaryDecoder
         do {
             let repo = try decoder.decode(Repo.self, from: version2)
             XCTAssertEqual(repo.name, "Name")

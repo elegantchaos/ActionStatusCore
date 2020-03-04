@@ -4,6 +4,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import SwiftUI
+import DictionaryCoding
 
 @dynamicMemberLookup public struct WorkflowSettings: Codable, Equatable {
     public var options: [String] = []
@@ -25,11 +26,24 @@ internal extension String {
 }
 
 public struct Repo: Identifiable, Equatable {
+    static var dictionaryDecoder: DictionaryDecoder {
+        let decoder = DictionaryDecoder()
+        let defaults: [String:Any] = [
+            String(describing: LocalPathDictionary.self): LocalPathDictionary()
+        ]
+        decoder.missingValueDecodingStrategy = .useDefault(defaults: defaults)
+        return decoder
+            
+
+    }
+    
     public enum State: Int, Codable {
         case failing = 0
         case passing = 1
         case unknown = 2
     }
+
+    public typealias LocalPathDictionary = [String:String]
 
     public let id: UUID
     public var name: String
@@ -38,7 +52,7 @@ public struct Repo: Identifiable, Equatable {
     public var branches: [String]
     public var state: State
     public var settings: WorkflowSettings
-    public var paths: [String:String]
+    public var paths: LocalPathDictionary
     public var lastFailed: Date?
     public var lastSucceeded: Date?
     
