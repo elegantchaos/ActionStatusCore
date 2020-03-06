@@ -20,8 +20,6 @@ public class Model: ObservableObject {
     internal var composingID: UUID?
     
     public var block: RefreshBlock?
-    public var exportURL: URL?
-    public var exportYML: String?
     public var refreshInterval: Double = 10.0
     
     @Published public var items: [Repo]
@@ -53,8 +51,6 @@ public extension Model {
         composingID = repo.id
         isSaving = false
         isComposing = true
-        exportURL = nil
-        exportYML = ""
     }
     
     func hideComposeWindow() {
