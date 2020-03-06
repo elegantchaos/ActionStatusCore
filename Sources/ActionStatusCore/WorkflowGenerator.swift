@@ -10,7 +10,9 @@ public class WorkflowGenerator {
         Job("tvOS", name: "tvOS", platform: .mac),
         Job("watchOS", name: "watchOS", platform: .mac),
         Job("linux-50", name: "Linux (Swift 5.0)", swift: "5.0"),
-        Job("linux-51", name: "Linux (Swift 5.1)", swift: "5.1")
+        Job("linux-51", name: "Linux (Swift 5.1)", swift: "5.1"),
+        Job("linux-52", name: "Linux (Swift 5.2 Nightly)", swift: "nightly-5.2"),
+        Job("linux-n", name: "Linux (Swift Nightly)", swift: "nightly"),
     ]
     
     public let configurations = [
