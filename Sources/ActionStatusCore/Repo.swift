@@ -78,14 +78,52 @@ public struct Repo: Identifiable, Equatable {
         self.paths = [:]
     }
     
-    public mutating func remember(path: String, forDevice device: String) {
-        paths[device] = path
+    public mutating func remember(url: URL, forDevice device: String) {
+        paths[device] = url.absoluteURL.path
+        storeBookmark(for: url)
     }
     
-    public func path(forDevice device: String) -> String? {
-        return paths[device]
+    public func url(forDevice device: String) -> URL? {
+        guard let path = paths[device] else { return nil }
+        
+        let url = URL(fileURLWithPath: path)
+        return restoreBookmark(for: url)
     }
     
+    
+    func storeBookmark(for url: URL) {
+        let path = url.absoluteURL.path
+        do {
+            guard url.startAccessingSecurityScopedResource() else {
+                throw ActionStatusError.couldntAccessSecurityScope
+            }
+            
+            // Make sure you release the security-scoped resource when you are done.
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            let bookmarkData = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+            UserDefaults.standard.set(bookmarkData, forKey: "bookmark:\(path)")
+        } catch {
+            modelChannel.log("Couldn't make bookmark for \(url).\n\(error)")
+        }
+    }
+    
+    func restoreBookmark(for url: URL) -> URL {
+        let path = url.absoluteURL.path
+        if let data = UserDefaults.standard.data(forKey: "bookmark:\(path)") {
+            do {
+                var isStale = false
+                let resolved = try URL(resolvingBookmarkData: data, bookmarkDataIsStale: &isStale)
+                if !isStale {
+                    return resolved
+                }
+            } catch {
+            modelChannel.log("Couldn't retrieve bookmark for \(url).\n\(error)")
+            }
+        }
+    
+        return url
+    }
 
     func state(fromSVG svg: String) -> State {
         if svg.contains("failing") {

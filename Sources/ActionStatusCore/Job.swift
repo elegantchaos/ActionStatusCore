@@ -9,13 +9,13 @@ public class Job: Option {
         case linux
     }
     
-    let swift: String?
+    let container: String?
     public let platform: Platform
     let xcodePlatforms: [String]
     
-    public init(_ id: String, name: String, platform: Platform = .linux, swift: String? = nil, xcodePlatforms: [String] = []) {
+    public init(_ id: String, name: String, platform: Platform = .linux, container: String? = nil, xcodePlatforms: [String] = []) {
         self.platform = platform
-        self.swift = swift
+        self.container = container
         self.xcodePlatforms = xcodePlatforms
         super.init(id, name: name)
     }
@@ -42,12 +42,12 @@ public class Job: Option {
             )
             
             case .linux:
-                let swift = self.swift ?? "5.1"
+                let container = self.container ?? "swift:5.1"
                 yaml.append(
             """
 
                     runs-on: ubuntu-latest
-                    container: swift:\(swift)
+                    container: \(container)
             """
                 )
         }

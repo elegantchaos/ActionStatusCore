@@ -9,10 +9,10 @@ public class WorkflowGenerator {
         Job("iOS", name: "iOS", platform: .mac),
         Job("tvOS", name: "tvOS", platform: .mac),
         Job("watchOS", name: "watchOS", platform: .mac),
-        Job("linux-50", name: "Linux (Swift 5.0)", swift: "5.0"),
-        Job("linux-51", name: "Linux (Swift 5.1)", swift: "5.1"),
-        Job("linux-52", name: "Linux (Swift 5.2 Nightly)", swift: "nightly-5.2"),
-        Job("linux-n", name: "Linux (Swift Nightly)", swift: "nightly"),
+        Job("linux-50", name: "Linux (Swift 5.0)", container: "swift:5.0"),
+        Job("linux-51", name: "Linux (Swift 5.1)", container: "swift:5.1"),
+        Job("linux-52", name: "Linux (Swift 5.2 Nightly)", container: "swiftlang/swift:nightly-5.2"),
+        Job("linux-n", name: "Linux (Swift Nightly)", container: "swiftlang/swift:nightly"),
     ]
     
     public let configurations = [
@@ -105,3 +105,21 @@ public class WorkflowGenerator {
         return source
     }
 }
+
+
+/* README.md header to generate
+ 
+ [![Test results][tests shield]][actions] [![Latest release][release shield]][releases] [![Swift 5.0][swift shield]][swift] ![Platforms: iOS, macOS, tvOS, watchOS, Linux][platforms shield]
+
+
+ [swift]: https://swift.org
+
+ [releases]: https://github.com/elegantchaos/Logger/releases
+ [release shield]: https://img.shields.io/github/v/release/elegantchaos/Logger
+ [swift shield]: https://img.shields.io/badge/swift-5.0-F05138.svg "Swift 5.0"
+ [platforms shield]: https://img.shields.io/badge/platforms-iOS_macOS_tvOS_watchOS_Linux-lightgrey.svg?style=flat "iOS, macOS, tvOS, watchOS, Linux"
+
+ [actions]: https://github.com/elegantchaos/Logger/actions
+ [tests shield]: https://github.com/elegantchaos/Logger/workflows/tests/badge.svg
+
+ */

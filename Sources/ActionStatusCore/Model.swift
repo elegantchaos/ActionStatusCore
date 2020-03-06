@@ -10,6 +10,10 @@ import Hardware
 
 let modelChannel = Channel("com.elegantchaos.actionstatus.Model")
 
+public enum ActionStatusError: Error {
+    case couldntAccessSecurityScope
+}
+    
 public class Model: ObservableObject {
     public typealias RepoList = [Repo]
     public typealias RefreshBlock = () -> Void
@@ -17,14 +21,11 @@ public class Model: ObservableObject {
     internal let store: NSUbiquitousKeyValueStore
     internal let key: String = "State"
     internal var timer: Timer?
-    internal var composingID: UUID?
     
     public var block: RefreshBlock?
     public var refreshInterval: Double = 10.0
     
     @Published public var items: [Repo]
-    @Published public var isComposing = false
-    @Published public var isSaving = false
     
     public init(_ repos: [Repo], store: NSUbiquitousKeyValueStore = NSUbiquitousKeyValueStore.default, block: RefreshBlock? = nil) {
         self.block = block
@@ -45,20 +46,6 @@ public extension Model {
             }
         }
         return count
-    }
-    
-    func showComposeWindow(for repo: Repo) {
-        composingID = repo.id
-        isSaving = false
-        isComposing = true
-    }
-    
-    func hideComposeWindow() {
-        isComposing = false
-    }
-    
-    func repoToCompose() -> Repo {
-        return items.first(where: { $0.id == composingID })!
     }
     
     func load(fromDefaultsKey key: String) {
@@ -97,12 +84,11 @@ public extension Model {
         return items.first(where: { $0.id == id })
     }
     
-    func remember(path: String, forDevice device: String, inRepo repo: Repo) {
+    func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
         for n in 0 ..< items.count {
             if items[n].id == repo.id {
-                items[n].remember(path: path, forDevice: device)
+                items[n].remember(url: url, forDevice: device)
             }
-            
         }
     }
     
@@ -211,8 +197,10 @@ internal extension Model {
         }
     }
     
-    func add(fromGitRepo url: URL, detector: NSDataDetector) {
-        if let config = try? String(contentsOf: url.appendingPathComponent("config")) {
+    func add(fromGitRepo localGitFolderURL: URL, detector: NSDataDetector) {
+        let containerURL = localGitFolderURL.deletingLastPathComponent()
+        let containerName = containerURL.lastPathComponent
+        if let config = try? String(contentsOf: localGitFolderURL.appendingPathComponent("config")) {
             let tweaked = config.replacingOccurrences(of: "git@github.com:", with: "https://github.com/")
             let range = NSRange(location: 0, length: tweaked.count)
             for result in detector.matches(in: tweaked, options: [], range: range) {
@@ -224,10 +212,9 @@ internal extension Model {
                         repo = addRepo(name: name, owner: owner)
                     }
                     
-                    if let identifier = Device.main.identifier, var repo = repo {
-                        let path = url.deletingLastPathComponent().path
-                        repo.paths[identifier] = path
-                        modelChannel.log("Local path for \(repo.name) on machine \(identifier) is \(path).")
+                    if repo?.name == containerName, let identifier = Device.main.identifier, let repo = repo {
+                        remember(url: containerURL, forDevice: identifier, inRepo: repo)
+                        modelChannel.log("Local path for \(repo.name) on machine \(identifier) is \(localGitFolderURL).")
                     }
                 }
             }
