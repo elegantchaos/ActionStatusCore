@@ -78,6 +78,15 @@ public struct Repo: Identifiable, Equatable {
         self.paths = [:]
     }
     
+    public mutating func remember(path: String, forDevice device: String) {
+        paths[device] = path
+    }
+    
+    public func path(forDevice device: String) -> String? {
+        return paths[device]
+    }
+    
+
     func state(fromSVG svg: String) -> State {
         if svg.contains("failing") {
             return .failing

@@ -93,6 +93,19 @@ public extension Model {
         store.set(repoIDs, forKey: key)
     }
     
+    func repo(withIdentifier id: UUID) -> Repo? {
+        return items.first(where: { $0.id == id })
+    }
+    
+    func remember(path: String, forDevice device: String, inRepo repo: Repo) {
+        for n in 0 ..< items.count {
+            if items[n].id == repo.id {
+                items[n].remember(path: path, forDevice: device)
+            }
+            
+        }
+    }
+    
     func refresh() {
         scheduleRefresh(after: 0)
     }
