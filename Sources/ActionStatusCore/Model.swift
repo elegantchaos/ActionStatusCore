@@ -21,16 +21,27 @@ public class Model: ObservableObject {
     internal let store: NSUbiquitousKeyValueStore
     internal let key: String = "State"
     internal var timer: Timer?
-    
+    internal var items: [UUID:Repo]
+
     public var block: RefreshBlock?
     public var refreshInterval: Double = 10.0
     
-    @Published public var items: [Repo]
+    @Published public var itemIdentifiers: [UUID]
     
     public init(_ repos: [Repo], store: NSUbiquitousKeyValueStore = NSUbiquitousKeyValueStore.default, block: RefreshBlock? = nil) {
         self.block = block
         self.store = store
-        self.items = repos
+        
+        var index: [UUID:Repo] = [:]
+        var identifiers: [UUID] = []
+        for repo in repos {
+            let id = repo.id
+            index[id] = repo
+            identifiers.append(id)
+        }
+        self.items = index
+        self.itemIdentifiers = identifiers
+        sortItems()
         NotificationCenter.default.addObserver(self, selector: #selector(modelChangedExternally), name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
     }
 }
@@ -41,7 +52,7 @@ public extension Model {
     var failingCount: Int {
         var count = 0
         for repo in items {
-            if repo.state == .failing {
+            if repo.value.state == .failing {
                 count += 1
             }
         }
@@ -51,12 +62,12 @@ public extension Model {
     func load(fromDefaultsKey key: String) {
         let decoder = Repo.dictionaryDecoder
         if let repoIDs = store.array(forKey: key) as? Array<String> {
-            var loadedRepos: [Repo] = []
+            var loadedRepos: [UUID:Repo] = [:]
             for repoID in repoIDs {
-                if let dict = store.dictionary(forKey: repoID) {
+                if let dict = store.dictionary(forKey: repoID), let id = UUID(uuidString: repoID) {
                     do {
                         let repo = try decoder.decode(Repo.self, from: dict)
-                        loadedRepos.append(repo)
+                        loadedRepos[id] = repo
                     } catch {
                         modelChannel.log("Failed to restore repo data from \(dict).\n\nError:\(error)")
                     }
@@ -70,8 +81,8 @@ public extension Model {
     func save(toDefaultsKey key: String) {
         let encoder = DictionaryEncoder()
         var repoIDs: [String] = []
-        for repo in items {
-            let repoID = repo.id.uuidString
+        for (id, repo) in items {
+            let repoID = id.uuidString
             if let dict = try? encoder.encode(repo) as [String:Any] {
                 store.set(dict, forKey: repoID)
                 repoIDs.append(repoID)
@@ -81,14 +92,12 @@ public extension Model {
     }
     
     func repo(withIdentifier id: UUID) -> Repo? {
-        return items.first(where: { $0.id == id })
+        return items[id]
     }
     
     func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
-        for n in 0 ..< items.count {
-            if items[n].id == repo.id {
-                items[n].remember(url: url, forDevice: device)
-            }
+        if let repo = items[repo.id] {
+            repo.remember(url: url, forDevice: device)
         }
     }
     
@@ -106,13 +115,17 @@ public extension Model {
     
     @discardableResult func addRepo() -> Repo {
         let repo = Repo()
-        items.append(repo)
+        items[repo.id] = repo
+        itemIdentifiers.append(repo.id)
+
         return repo
     }
     
     @discardableResult func addRepo(name: String, owner: String) -> Repo {
         let repo = Repo(name, owner: owner, workflow: "Tests")
-        items.append(repo)
+        items[repo.id] = repo
+        itemIdentifiers.append(repo.id)
+
         return repo
     }
     
@@ -134,10 +147,11 @@ public extension Model {
     
     
     func remove(repo: Repo) {
-        if let index = items.firstIndex(of: repo) {
-            var updated = items
+        if let index = itemIdentifiers.firstIndex(of: repo.id) {
+            items[repo.id] = nil
+            var updated = itemIdentifiers
             updated.remove(at: index)
-            items = updated
+            itemIdentifiers = updated
         }
     }
 }
@@ -162,19 +176,19 @@ internal extension Model {
         DispatchQueue.global(qos: .background).async {
             modelChannel.log("Refreshing...")
             var newState: [UUID: Repo.State] = [:]
-            for repo in self.items {
-                newState[repo.id] = repo.checkState()
+            for (id, repo) in self.items {
+                newState[id] = repo.checkState()
             }
             
             DispatchQueue.main.async {
                 modelChannel.log("Completed Refresh")
                 
-                for n in 0 ..< self.items.count {
-                    if let state = newState[self.items[n].id] {
-                        self.items[n].state = state
+                for (id, repo) in self.items {
+                    if let state = newState[id] {
+                        repo.state = state
                         switch state {
-                            case .passing: self.items[n].lastSucceeded = Date()
-                            case .failing: self.items[n].lastFailed = Date()
+                            case .passing: repo.lastSucceeded = Date()
+                            case .failing: repo.lastFailed = Date()
                             default: break
                         }
                     }
@@ -188,13 +202,14 @@ internal extension Model {
     }
     
     func sortItems() {
-        self.items.sort { (r1, r2) -> Bool in
+        let sorted = items.values.sorted { (r1, r2) -> Bool in
             if (r1.state == r2.state) {
                 return r1.name < r2.name
             }
             
             return r1.state.rawValue < r2.state.rawValue
         }
+        itemIdentifiers = sorted.map({ $0.id })
     }
     
     func add(fromGitRepo localGitFolderURL: URL, detector: NSDataDetector) {
@@ -207,7 +222,7 @@ internal extension Model {
                 if let url = result.url, url.scheme == "https", url.host == "github.com" {
                     let name = url.deletingPathExtension().lastPathComponent
                     let owner = url.deletingLastPathComponent().lastPathComponent
-                    var repo = items.filter({ $0.name == name && $0.owner == owner }).first
+                    var repo = items.first(where: { $0.value.name == name && $0.value.owner == owner })?.value
                     if repo == nil {
                         repo = addRepo(name: name, owner: owner)
                     }

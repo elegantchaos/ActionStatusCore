@@ -25,7 +25,15 @@ internal extension String {
     static let defaultOwnerKey = "DefaultOwner"
 }
 
-public struct Repo: Identifiable, Equatable {
+public final class Repo: Identifiable, Equatable, Hashable {
+    public static func == (lhs: Repo, rhs: Repo) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        id.hash(into: &hasher)
+    }
+    
     static var dictionaryDecoder: DictionaryDecoder {
         let decoder = DictionaryDecoder()
         let defaults: [String:Any] = [
@@ -78,7 +86,7 @@ public struct Repo: Identifiable, Equatable {
         self.paths = [:]
     }
     
-    public mutating func remember(url: URL, forDevice device: String) {
+    public func remember(url: URL, forDevice device: String) {
         paths[device] = url.absoluteURL.path
         storeBookmark(for: url)
     }
