@@ -28,10 +28,20 @@ public class Job: Option {
         
         var yaml =
             """
+                
                 \(id):
                     name: \(name)
             """
         
+        if repo.settings.test && platform == .linux {
+            yaml.append(
+            """
+
+                    needs: update-linuxmain
+            """
+            )
+        }
+
         switch (platform) {
             case .mac:
             yaml.append(

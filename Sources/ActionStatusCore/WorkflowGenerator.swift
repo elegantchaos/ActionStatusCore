@@ -98,7 +98,39 @@ public class WorkflowGenerator {
         
         """
         
-        for job in enabledJobs(for: repo) {
+        let jobs = enabledJobs(for: repo)
+        
+        let needsLinuxMain = repo.settings.test && jobs.contains(where: { $0.platform == .linux })
+        
+        if needsLinuxMain {
+            source.append("""
+
+            update-linuxmain:
+                name: Update Linux Main
+                runs-on: macOS-latest
+                steps:
+                - name: Checkout
+                  uses: actions/checkout@v1
+                - name: Update
+                  run: swift test --generate-linuxmain
+                - name: Commit Changes
+                  continue-on-error: true
+                  run: |
+                    git config --local user.email "action@github.com"
+                    git config --local user.name "GitHub Action"
+                    git commit -m "Updated Linux Main" -a
+                - name: Push changes
+                  continue-on-error: true
+                  uses: ad-m/github-push-action@master
+                  with:
+                    github_token: ${{ secrets.GITHUB_TOKEN }}
+
+
+        """
+            )
+        }
+        
+        for job in jobs {
             source.append(job.yaml(repo: repo, configurations: enabledConfigs(for: repo)))
         }
         
