@@ -25,7 +25,7 @@ internal extension String {
     static let defaultOwnerKey = "DefaultOwner"
 }
 
-public final class Repo: Identifiable, Equatable, Hashable {
+public struct Repo: Identifiable, Equatable, Hashable {
     public static func == (lhs: Repo, rhs: Repo) -> Bool {
         return lhs.id == rhs.id
     }
@@ -86,7 +86,7 @@ public final class Repo: Identifiable, Equatable, Hashable {
         self.paths = [:]
     }
     
-    public func remember(url: URL, forDevice device: String) {
+    mutating public func remember(url: URL, forDevice device: String) {
         paths[device] = url.absoluteURL.path
         storeBookmark(for: url)
     }

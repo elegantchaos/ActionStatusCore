@@ -95,8 +95,13 @@ public extension Model {
         return items[id]
     }
     
+    func update(repo: Repo) {
+        items[repo.id] = repo
+        sortItems()
+    }
+    
     func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
-        if let repo = items[repo.id] {
+        if var repo = items[repo.id] {
             repo.remember(url: url, forDevice: device)
         }
     }
@@ -185,12 +190,14 @@ internal extension Model {
                 
                 for (id, repo) in self.items {
                     if let state = newState[id] {
-                        repo.state = state
+                        var updated = repo
+                        updated.state = state
                         switch state {
-                            case .passing: repo.lastSucceeded = Date()
-                            case .failing: repo.lastFailed = Date()
+                            case .passing: updated.lastSucceeded = Date()
+                            case .failing: updated.lastFailed = Date()
                             default: break
                         }
+                        self.items[id] = updated
                     }
                 }
                 
