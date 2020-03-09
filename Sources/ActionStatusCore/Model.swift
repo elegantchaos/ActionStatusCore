@@ -39,6 +39,7 @@ public class Model: ObservableObject {
             index[id] = repo
             identifiers.append(id)
         }
+        
         self.items = index
         self.itemIdentifiers = identifiers
         sortItems()
@@ -96,6 +97,7 @@ public extension Model {
     }
     
     func update(repo: Repo) {
+        assert(items[repo.id] != nil)
         items[repo.id] = repo
         sortItems()
     }
@@ -103,6 +105,7 @@ public extension Model {
     func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
         if var repo = items[repo.id] {
             repo.remember(url: url, forDevice: device)
+            update(repo: repo)
         }
     }
     
@@ -150,14 +153,16 @@ public extension Model {
         }
     }
     
+    func remove(atOffsets offsets: IndexSet) {
+        let ids = offsets.map({ self.itemIdentifiers[$0] })
+        remove(repos: ids)
+    }
     
-    func remove(repo: Repo) {
-        if let index = itemIdentifiers.firstIndex(of: repo.id) {
-            items[repo.id] = nil
-            var updated = itemIdentifiers
-            updated.remove(at: index)
-            itemIdentifiers = updated
+    func remove(repos: [UUID]) {
+        for repoID in repos {
+            items[repoID] = nil
         }
+        sortItems()
     }
 }
 
