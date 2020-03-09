@@ -111,6 +111,7 @@ public struct Repo: Identifiable, Equatable, Hashable {
             
             let bookmarkData = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
             UserDefaults.standard.set(bookmarkData, forKey: "bookmark:\(path)")
+            modelChannel.log("Stored local bookmark data for \(url.lastPathComponent).")
         } catch {
             modelChannel.log("Couldn't make bookmark for \(url).\n\(error)")
         }
@@ -123,6 +124,7 @@ public struct Repo: Identifiable, Equatable, Hashable {
                 var isStale = false
                 let resolved = try URL(resolvingBookmarkData: data, bookmarkDataIsStale: &isStale)
                 if !isStale {
+                    modelChannel.log("Resolved local bookmark data for \(url.lastPathComponent).")
                     return resolved
                 }
             } catch {

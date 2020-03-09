@@ -99,14 +99,17 @@ public class Job: Option {
                                 MACOS_SCHEME="$SCHEME"
                                 IOS_SCHEME="$SCHEME"
                                 TVOS_SCHEME="$SCHEME"
+                                WATCHOS_SCHEME="$SCHEME"
                             else
                                 MACOS_SCHEME="\(package)-macOS"
                                 IOS_SCHEME="\(package)-iOS"
                                 TVOS_SCHEME="\(package)-tvOS"
+                                WATCHOS_SCHEME="\(package)-watchOS"
                             fi
                             echo "WORKSPACE='$WORKSPACE'; SCHEME='$MACOS_SCHEME'" > names-macOS.sh
                             echo "WORKSPACE='$WORKSPACE'; SCHEME='$IOS_SCHEME'" > names-iOS.sh
                             echo "WORKSPACE='$WORKSPACE'; SCHEME='$TVOS_SCHEME'" > names-tvOS.sh
+                            echo "WORKSPACE='$WORKSPACE'; SCHEME='$WATCHOS_SCHEME'" > names-watchOS.sh
                 """
             )
         }
