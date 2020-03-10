@@ -27,6 +27,9 @@ public class Model: ObservableObject {
     public var refreshInterval: Double = 10.0
     
     @Published public var itemIdentifiers: [UUID]
+    @Published public var passing: Int = 0
+    @Published public var failing: Int = 0
+    @Published public var unreachable: Int = 0
     
     public init(_ repos: [Repo], store: NSUbiquitousKeyValueStore = NSUbiquitousKeyValueStore.default, block: RefreshBlock? = nil) {
         self.block = block
@@ -50,16 +53,6 @@ public class Model: ObservableObject {
 // MARK: Public
 
 public extension Model {
-    var failingCount: Int {
-        var count = 0
-        for repo in items {
-            if repo.value.state == .failing {
-                count += 1
-            }
-        }
-        return count
-    }
-    
     func load(fromDefaultsKey key: String) {
         let decoder = Repo.dictionaryDecoder
         if let repoIDs = store.array(forKey: key) as? Array<String> {
@@ -221,6 +214,14 @@ internal extension Model {
             
             return r1.state.rawValue < r2.state.rawValue
         }
+        
+        let set = NSCountedSet()
+        sorted.forEach({ set.add($0.state) })
+
+        passing = set.count(for: Repo.State.passing)
+        failing = set.count(for: Repo.State.failing)
+        unreachable = set.count(for: Repo.State.unknown)
+        
         itemIdentifiers = sorted.map({ $0.id })
     }
     
