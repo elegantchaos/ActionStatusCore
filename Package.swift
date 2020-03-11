@@ -13,7 +13,7 @@ let package = Package(
             targets: ["ActionStatusCore"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/elegantchaos/ApplicationExtensions.git", from: "1.0.6"),
+        .package(url: "https://github.com/elegantchaos/ApplicationExtensions.git", from: "1.0.7"),
         .package(url: "https://github.com/elegantchaos/DictionaryCoding.git", from: "1.0.9"),
         .package(url: "https://github.com/elegantchaos/Logger.git", from: "1.5.1"),
         .package(url: "https://github.com/elegantchaos/Hardware.git", from: "1.0.0")
