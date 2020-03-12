@@ -6,16 +6,26 @@
 import Foundation
 import ApplicationExtensions
 
+public struct Workflow {
+    public let repo: Repo
+    public let source: String
+    public let data: Data
+    public let header: String
+    public let delimiter: String
+}
+
 public class WorkflowGenerator {
+    static let enableLinuxMain = false
+
     public let platforms = [
-        Job("macOS", name: "macOS", platform: .mac),
-        Job("iOS", name: "iOS", platform: .mac),
-        Job("tvOS", name: "tvOS", platform: .mac),
-        Job("watchOS", name: "watchOS", platform: .mac),
-        Job("linux-50", name: "Linux (Swift 5.0)", container: "swift:5.0"),
-        Job("linux-51", name: "Linux (Swift 5.1)", container: "swift:5.1"),
-        Job("linux-52", name: "Linux (Swift 5.2 Nightly)", container: "swiftlang/swift:nightly-5.2"),
-        Job("linux-n", name: "Linux (Swift Nightly)", container: "swiftlang/swift:nightly"),
+        Job("macOS", name: "macOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
+        Job("iOS", name: "iOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
+        Job("tvOS", name: "tvOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
+        Job("watchOS", name: "watchOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
+        Job("linux-50", name: "Linux (Swift 5.0)", container: "swift:5.0", swift: "5.0"),
+        Job("linux-51", name: "Linux (Swift 5.1)", container: "swift:5.1", swift: "5.1"),
+        Job("linux-52", name: "Linux (Swift 5.2 Nightly)", container: "swiftlang/swift:nightly-5.2", swift: "5.2"),
+        Job("linux-n", name: "Linux (Swift Nightly)", container: "swiftlang/swift:nightly", swift: "5.2"),
     ]
     
     public let configurations = [
@@ -28,18 +38,21 @@ public class WorkflowGenerator {
         Option("test", name: "Run Tests"),
         Option("notify", name: "Post Notifications"),
         Option("upload", name: "Upload Logs"),
-        Option("useXcodeForMac", name: "Use Xcode For macOS Target")
+        Option("useXcodeForMac", name: "Use Xcode For macOS Target"),
+        Option("header", name: "Add a header to README.md")
     ]
     
     public init() {
     }
     
-    func enabledJobs(for repo: Repo) -> [Job] {
+    func enabledJobs(for repo: Repo) -> ([Job], [String]) {
         let options = repo.settings.options
         var jobs: [Job] = []
         var macPlatforms: [String] = []
+        var versions: Set<String> = []
         for platform in platforms {
             if options.contains(platform.id) {
+                versions.insert(platform.swift)
                 switch platform.platform {
                     case .mac:
                         macPlatforms.append(platform.id)
@@ -60,11 +73,12 @@ public class WorkflowGenerator {
             
             // make a catch-all job
             jobs.append(
-                Job(macID, name: macName, platform: .mac, xcodePlatforms: macPlatforms)
+                Job(macID, name: macName, platform: .mac, xcodePlatforms: macPlatforms, swift: "5.1") // TODO: find better way of determining Mac swift version
             )
         }
         
-        return jobs
+        let sortedVersions = versions.sorted()
+        return (jobs, sortedVersions)
     }
 
     func enabledConfigs(for repo: Repo) -> [String] {
@@ -90,7 +104,7 @@ public class WorkflowGenerator {
         return identifiers
     }
     
-    public func generateWorkflow(for repo: Repo, application: BundleInfo) -> String {
+    public func generateWorkflow(for repo: Repo, application: BundleInfo) -> Workflow? {
         var source =
         """
         # --------------------------------------------------------------------------------
@@ -106,10 +120,9 @@ public class WorkflowGenerator {
         
         """
         
-        let jobs = enabledJobs(for: repo)
+        let (jobs, swiftVersions) = enabledJobs(for: repo)
         
-        let needsLinuxMain = repo.settings.test && jobs.contains(where: { $0.platform == .linux })
-        
+        let needsLinuxMain = WorkflowGenerator.enableLinuxMain && repo.settings.test && jobs.contains(where: { $0.platform == .linux })
         if needsLinuxMain {
             source.append("""
 
@@ -138,28 +151,43 @@ public class WorkflowGenerator {
             )
         }
         
+        var platformBadgeNames: [String] = []
         for job in jobs {
             source.append(job.yaml(repo: repo, configurations: enabledConfigs(for: repo)))
+            if job.platform == .linux {
+                if !platformBadgeNames.contains("Linux") { platformBadgeNames.append("Linux") }
+            } else {
+                platformBadgeNames.append(job.id)
+            }
         }
         
-        return source
+        let platformNames = platformBadgeNames.joined(separator: ", ")
+        let badges = swiftVersions.map { "![swift \($0) shield]" }.joined(separator: " ")
+        
+        var header = ""
+        let headerDelimiter = "[comment]: <> (End of ActionStatus Header)\n"
+        if repo.settings.header {
+            header += """
+                [comment]: <> (Header Generated by ActionStatus \(application.versionString) - \(application.build))
+                
+                [![Test results][tests shield]][actions] [![Latest release][release shield]][releases] [\(badges)][swift] ![Platforms: \(platformNames)][platforms shield]
+
+                [release shield]: \(repo.imgShieldURL(for: .release))
+                [swift 5.0 shield]: \(repo.imgShieldURL(for: .swift50)) "Swift 5.0"
+                [swift 5.1 shield]: \(repo.imgShieldURL(for: .swift51)) "Swift 5.1"
+                [swift 5.2 shield]: \(repo.imgShieldURL(for: .swift52)) "Swift 5.2"
+                [platforms shield]: \(repo.imgShieldURL(forPlatforms: platformBadgeNames)) "\(platformNames)"
+
+                [swift]: https://swift.org
+                [releases]: \(repo.githubURL(for: .releases))
+                [actions]: \(repo.githubURL(for: .actions))
+                [tests shield]: \(repo.githubURL(for: .badge))
+
+                \(headerDelimiter)
+                """
+        }
+        
+        guard let data = source.data(using: .utf8) else { return nil }
+        return Workflow(repo: repo, source: source, data: data, header: header, delimiter: headerDelimiter)
     }
 }
-
-
-/* README.md header to generate
- 
- [![Test results][tests shield]][actions] [![Latest release][release shield]][releases] [![Swift 5.0][swift shield]][swift] ![Platforms: iOS, macOS, tvOS, watchOS, Linux][platforms shield]
-
-
- [swift]: https://swift.org
-
- [releases]: https://github.com/elegantchaos/Logger/releases
- [release shield]: https://img.shields.io/github/v/release/elegantchaos/Logger
- [swift shield]: https://img.shields.io/badge/swift-5.0-F05138.svg "Swift 5.0"
- [platforms shield]: https://img.shields.io/badge/platforms-iOS_macOS_tvOS_watchOS_Linux-lightgrey.svg?style=flat "iOS, macOS, tvOS, watchOS, Linux"
-
- [actions]: https://github.com/elegantchaos/Logger/actions
- [tests shield]: https://github.com/elegantchaos/Logger/workflows/tests/badge.svg
-
- */

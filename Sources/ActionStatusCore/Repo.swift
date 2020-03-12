@@ -13,8 +13,6 @@ import DictionaryCoding
         return options.contains(option)
     }
     
-    var build: Bool { return options.contains("build") }
-    
     public init(options: [String] = []) {
         self.options = options
     }
@@ -186,13 +184,53 @@ public struct Repo: Identifiable, Equatable, Hashable {
     public enum GithubLocation {
         case repo
         case workflow
+        case releases
+        case actions
+        case badge
     }
         
     public func githubURL(for location: GithubLocation = .workflow) -> URL {
-        let suffix = location == .workflow ? "/actions?query=workflow%3A\(workflow)" : ""
+        let suffix: String
+        switch location {
+            case .workflow: suffix = "/actions?query=workflow%3A\(workflow)"
+            case .releases: suffix = "/releases"
+            case .actions: suffix = "/actions"
+            case .badge: suffix = "/workflows/\(workflow)/badge.svg"
+            default: suffix = ""
+        }
+        
         return URL(string: "https://github.com/\(owner)/\(name)\(suffix)")!
     }
-  }
+    
+    public enum ImgShieldLocation {
+        case release
+        case swift50
+        case swift51
+        case swift52
+    }
+    
+    public func imgSheildURL(suffix: String) -> URL {
+        return URL(string: "https://img.shields.io/\(suffix)")!
+    }
+    
+    public func imgShieldURL(for type: ImgShieldLocation) -> URL {
+        let suffix: String
+        switch type {
+            case .release: suffix = "github/v/release/\(owner)/\(name)"
+            case .swift50: suffix = "badge/swift-5.0-F05138.svg"
+            case .swift51: suffix = "badge/swift-5.1-F05138.svg"
+            case .swift52: suffix = "badge/swift-5.2-F05138.svg"
+        }
+        
+        return imgSheildURL(suffix: suffix)
+    }
+
+    public func imgShieldURL(forPlatforms platforms: [String]) -> URL {
+        let platformBadges = platforms.joined(separator: "_")
+        return imgSheildURL(suffix: "badge/platforms-\(platformBadges)-lightgrey.svg?style=flat")
+    }
+
+}
 
 extension Repo: Codable {
 }

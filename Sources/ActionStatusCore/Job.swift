@@ -10,13 +10,15 @@ public class Job: Option {
     }
     
     let container: String?
+    let swift: String
     public let platform: Platform
     let xcodePlatforms: [String]
     
-    public init(_ id: String, name: String, platform: Platform = .linux, container: String? = nil, xcodePlatforms: [String] = []) {
+    public init(_ id: String, name: String, platform: Platform = .linux, container: String? = nil, xcodePlatforms: [String] = [], swift: String) {
         self.platform = platform
         self.container = container
         self.xcodePlatforms = xcodePlatforms
+        self.swift = swift
         super.init(id, name: name)
     }
 
@@ -33,7 +35,7 @@ public class Job: Option {
                     name: \(name)
             """
         
-        if repo.settings.test && platform == .linux {
+        if WorkflowGenerator.enableLinuxMain && repo.settings.test && platform == .linux {
             yaml.append(
             """
 
@@ -121,7 +123,7 @@ public class Job: Option {
                         """
                         
                                 - name: Build (\(config))
-                                  run: swift build -v -c \(config.lowercased())
+                                  run: swift build -c \(config.lowercased())
                         """
                     )
                 }
@@ -134,7 +136,7 @@ public class Job: Option {
                         """
                         
                                 - name: Test (\(config))
-                                  run: swift test -v -c \(config.lowercased()) \(extraArgs)
+                                  run: swift test --enable-test-discovery --configuration \(config.lowercased()) \(extraArgs)
                         """
                     )
                 }
