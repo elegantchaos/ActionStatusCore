@@ -132,11 +132,12 @@ public class Job: Option {
             if test {
                 for config in configurations {
                     let extraArgs = config == "Release" ? "-Xswiftc -enable-testing" : ""
+                    let discovery = (swift > "5.1") || (config == "Debug" && (swift == "5.1")) ? "--enable-test-discovery" : ""
                     yaml.append(
                         """
                         
                                 - name: Test (\(config))
-                                  run: swift test --enable-test-discovery --configuration \(config.lowercased()) \(extraArgs)
+                                  run: swift test \(discovery) --configuration \(config.lowercased()) \(extraArgs)
                         """
                     )
                 }
