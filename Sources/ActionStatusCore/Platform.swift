@@ -3,7 +3,7 @@
 //  All code (c) 2020 - present day, Elegant Chaos Limited.
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-public class Job: Option {
+public class Platform: Option {
     let xcodeDestination: String?
     
     public init(_ id: String, name: String, xcodeDestination: String? = nil) {
@@ -19,7 +19,7 @@ public class Job: Option {
         }
     }
     
-    public func yaml(repo: Repo, swifts: [SwiftVersion], configurations: [String]) -> String {
+    public func yaml(repo: Repo, swifts: [Swift], configurations: [String]) -> String {
         let settings = repo.settings
         let package = repo.name
         let test = settings.test
@@ -63,9 +63,9 @@ public class Job: Option {
         return yaml
     }
 
-    fileprivate func swiftYAML(configurations: [String], build: Bool, test: Bool, customToolchain: Bool, swift: SwiftVersion) -> String {
+    fileprivate func swiftYAML(configurations: [String], build: Bool, test: Bool, customToolchain: Bool, swift: Swift) -> String {
         var yaml = ""
-        let pathFix = customToolchain ? "" : "export PATH=\"swift-latest:$PATH\"; "
+        let pathFix = customToolchain ? "export PATH=\"swift-latest:$PATH\"; " : ""
         if build {
             for config in configurations {
                 yaml.append(
@@ -180,7 +180,7 @@ public class Job: Option {
         )
     }
     
-    fileprivate func notifyYAML(swift: SwiftVersion) -> String {
+    fileprivate func notifyYAML(swift: Swift) -> String {
         var yaml = ""
         yaml.append(
             """
@@ -220,7 +220,7 @@ public class Job: Option {
         )
     }
     
-    fileprivate func containerYAML(_ yaml: inout String, _ swift: SwiftVersion, _ xcodeToolchain: inout String?) {
+    fileprivate func containerYAML(_ yaml: inout String, _ swift: Swift, _ xcodeToolchain: inout String?) {
         switch id {
             case "linux":
                 yaml.append(

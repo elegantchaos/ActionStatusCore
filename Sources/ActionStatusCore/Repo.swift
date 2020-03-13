@@ -204,9 +204,6 @@ public struct Repo: Identifiable, Equatable, Hashable {
     
     public enum ImgShieldLocation {
         case release
-        case swift50
-        case swift51
-        case swift52
     }
     
     public func imgSheildURL(suffix: String) -> URL {
@@ -217,12 +214,13 @@ public struct Repo: Identifiable, Equatable, Hashable {
         let suffix: String
         switch type {
             case .release: suffix = "github/v/release/\(owner)/\(name)"
-            case .swift50: suffix = "badge/swift-5.0-F05138.svg"
-            case .swift51: suffix = "badge/swift-5.1-F05138.svg"
-            case .swift52: suffix = "badge/swift-5.2-F05138.svg"
         }
         
         return imgSheildURL(suffix: suffix)
+    }
+
+    public func imgShieldURL(for swift: Swift) -> URL {
+        return imgSheildURL(suffix: "badge/swift-\(swift.short)-F05138.svg")
     }
 
     public func imgShieldURL(forPlatforms platforms: [String]) -> URL {
