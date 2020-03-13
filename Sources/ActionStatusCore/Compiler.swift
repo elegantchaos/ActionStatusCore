@@ -5,7 +5,7 @@
 
 import Foundation
 
-public class Swift: Option {
+public class Compiler: Option {
     public enum XcodeMode {
         case latest
         case toolchain(branch: String)

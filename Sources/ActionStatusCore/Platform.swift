@@ -19,7 +19,7 @@ public class Platform: Option {
         }
     }
     
-    public func yaml(repo: Repo, swifts: [Swift], configurations: [String]) -> String {
+    public func yaml(repo: Repo, compilers: [Compiler], configurations: [String]) -> String {
         let settings = repo.settings
         let package = repo.name
         let test = settings.test
@@ -28,15 +28,15 @@ public class Platform: Option {
         var yaml = ""
         var xcodeToolchain: String? = nil
         
-        for swift in swifts {
+        for compiler in compilers {
             var job =
             """
             
-                \(id)-\(swift.id):
+                \(id)-\(compiler.id):
                     name: \(name)
             """
             
-            containerYAML(&job, swift, &xcodeToolchain)
+            containerYAML(&job, compiler, &xcodeToolchain)
             commonYAML(&job)
             
             if let branch = xcodeToolchain {
@@ -46,7 +46,7 @@ public class Platform: Option {
             if let name = xcodeDestination {
                 xcodebuildYAML(name, &job, package, build, configurations, test)
             } else {
-                job.append(swiftYAML(configurations: configurations, build: build, test: test, customToolchain: xcodeToolchain != nil, swift: swift))
+                job.append(swiftYAML(configurations: configurations, build: build, test: test, customToolchain: xcodeToolchain != nil, compiler: compiler))
             }
             
             if settings.upload {
@@ -54,7 +54,7 @@ public class Platform: Option {
             }
             
             if settings.notify {
-                job.append(notifyYAML(swift: swift))
+                job.append(notifyYAML(compiler: compiler))
             }
             
             yaml.append("\(job)\n\n")
@@ -63,7 +63,7 @@ public class Platform: Option {
         return yaml
     }
 
-    fileprivate func swiftYAML(configurations: [String], build: Bool, test: Bool, customToolchain: Bool, swift: Swift) -> String {
+    fileprivate func swiftYAML(configurations: [String], build: Bool, test: Bool, customToolchain: Bool, compiler: Compiler) -> String {
         var yaml = ""
         let pathFix = customToolchain ? "export PATH=\"swift-latest:$PATH\"; " : ""
         if build {
@@ -81,7 +81,7 @@ public class Platform: Option {
         if test {
             for config in configurations {
                 let buildForTesting = config == "Release" ? "-Xswiftc -enable-testing" : ""
-                let discovery = (swift.id != "swift-50") && !((swift.id == "swift-51") && (config == "Release")) ? "--enable-test-discovery" : ""
+                let discovery = (compiler.id != "swift-50") && !((compiler.id == "swift-51") && (config == "Release")) ? "--enable-test-discovery" : ""
                 yaml.append(
                     """
                     
@@ -180,7 +180,7 @@ public class Platform: Option {
         )
     }
     
-    fileprivate func notifyYAML(swift: Swift) -> String {
+    fileprivate func notifyYAML(compiler: Compiler) -> String {
         var yaml = ""
         yaml.append(
             """
@@ -190,7 +190,7 @@ public class Platform: Option {
                       if: always()
                       with:
                         type: ${{ job.status }}
-                        job_name: '\(name) (\(swift.name))'
+                        job_name: '\(name) (\(compiler.name))'
                         mention_if: 'failure'
                         url: ${{ secrets.SLACK_WEBHOOK }}
             """
@@ -220,14 +220,14 @@ public class Platform: Option {
         )
     }
     
-    fileprivate func containerYAML(_ yaml: inout String, _ swift: Swift, _ xcodeToolchain: inout String?) {
+    fileprivate func containerYAML(_ yaml: inout String, _ compiler: Compiler, _ xcodeToolchain: inout String?) {
         switch id {
             case "linux":
                 yaml.append(
                     """
                     
                             runs-on: ubuntu-latest
-                            container: \(swift.linux)
+                            container: \(compiler.linux)
                     """
             )
             
@@ -239,7 +239,7 @@ public class Platform: Option {
                     """
                 )
                 
-                switch swift.mac {
+                switch compiler.mac {
                     case .latest: break
                     case .toolchain(let branch): xcodeToolchain = branch
             }

@@ -219,8 +219,8 @@ public struct Repo: Identifiable, Equatable, Hashable {
         return imgSheildURL(suffix: suffix)
     }
 
-    public func imgShieldURL(for swift: Swift) -> URL {
-        return imgSheildURL(suffix: "badge/swift-\(swift.short)-F05138.svg")
+    public func imgShieldURL(for compiler: Compiler) -> URL {
+        return imgSheildURL(suffix: "badge/swift-\(compiler.short)-F05138.svg")
     }
 
     public func imgShieldURL(forPlatforms platforms: [String]) -> URL {
