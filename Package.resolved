@@ -2,12 +2,48 @@
   "object": {
     "pins": [
       {
+        "package": "ApplicationExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/ApplicationExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "b8f48ff3f8d15ad15ab4077e17f92f3ae9e46381",
+          "version": "1.0.7"
+        }
+      },
+      {
+        "package": "CollectionExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/CollectionExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "d38d95d1458f1ef877c72584895da51e1b2d5149",
+          "version": "1.0.1"
+        }
+      },
+      {
         "package": "DictionaryCoding",
-        "repositoryURL": "http://github.com/elegantchaos/DictionaryCoding.git",
+        "repositoryURL": "https://github.com/elegantchaos/DictionaryCoding.git",
         "state": {
           "branch": null,
           "revision": "ae19e456bd550fed8f341e5bae4318333c53a5b4",
           "version": "1.0.9"
+        }
+      },
+      {
+        "package": "Hardware",
+        "repositoryURL": "https://github.com/elegantchaos/Hardware.git",
+        "state": {
+          "branch": null,
+          "revision": "a9f223b6aa675c37b6090e3d431346f5c73a1f3d",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "package": "Logger",
+        "repositoryURL": "https://github.com/elegantchaos/Logger.git",
+        "state": {
+          "branch": null,
+          "revision": "e4073d0427146d2884730d0cdcb62e4ce0f80938",
+          "version": "1.5.2"
         }
       }
     ]

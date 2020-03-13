@@ -4,10 +4,12 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 public class Platform: Option {
+    let subPlatforms: [Platform]
     let xcodeDestination: String?
     
-    public init(_ id: String, name: String, xcodeDestination: String? = nil) {
+    public init(_ id: String, name: String, xcodeDestination: String? = nil, subPlatforms: [Platform] = []) {
         self.xcodeDestination = xcodeDestination
+        self.subPlatforms = subPlatforms
         super.init(id, name: name)
     }
 
@@ -33,7 +35,7 @@ public class Platform: Option {
             """
             
                 \(id)-\(compiler.id):
-                    name: \(name)
+                    name: \(name) (\(compiler.name))
             """
             
             containerYAML(&job, compiler, &xcodeToolchain)
@@ -43,10 +45,13 @@ public class Platform: Option {
                 toolchainYAML(&job, branch)
             }
             
-            if let name = xcodeDestination {
-                xcodebuildYAML(name, &job, package, build, configurations, test)
-            } else {
+            if subPlatforms.isEmpty {
                 job.append(swiftYAML(configurations: configurations, build: build, test: test, customToolchain: xcodeToolchain != nil, compiler: compiler))
+            } else {
+                job.append(xcodebuildCommonYAML())
+                for platform in subPlatforms {
+                    job.append(platform.xcodebuildYAML(configurations: configurations, package: package, build: build, test: test))
+                }
             }
             
             if settings.upload {
@@ -93,43 +98,45 @@ public class Platform: Option {
         }
         return yaml
     }
-    
-    fileprivate func xcodebuildYAML(_ name: String, _ yaml: inout String, _ package: String, _ build: Bool, _ configurations: [String], _ test: Bool) {
-        let destination = name.isEmpty ? "" : "-destination \"name=\(name)\""
+
+    fileprivate func xcodebuildCommonYAML() -> String {
+        var yaml = ""
         yaml.append(
             """
             
-                - name: Xcode Version
-                  run: xcodebuild -version
-                - name: XC Pretty
-                  run: sudo gem install xcpretty-travis-formatter
-                - name: Detect Workspace & Scheme
-                  run: |
-                    WORKSPACE="\(package).xcworkspace"
-                    if [[ ! -e "$WORKSPACE" ]]
-                    then
-                    WORKSPACE="."
-                    GOTPACKAGE=$(xcodebuild -workspace . -list | (grep \(package)-Package || true))
-                    if [[ $GOTPACKAGE != "" ]]
-                    then
-                    SCHEME="\(package)-Package"
-                    else
-                    SCHEME="\(package)"
-                    fi
-                    MACOS_SCHEME="$SCHEME"
-                    IOS_SCHEME="$SCHEME"
-                    TVOS_SCHEME="$SCHEME"
-                    WATCHOS_SCHEME="$SCHEME"
-                    else
-                    MACOS_SCHEME="\(package)-macOS"
-                    IOS_SCHEME="\(package)-iOS"
-                    TVOS_SCHEME="\(package)-tvOS"
-                    WATCHOS_SCHEME="\(package)-watchOS"
-                    fi
-                    echo "WORKSPACE='$WORKSPACE'; SCHEME='$MACOS_SCHEME'" > names-macOS.sh
-                    echo "WORKSPACE='$WORKSPACE'; SCHEME='$IOS_SCHEME'" > names-iOS.sh
-                    echo "WORKSPACE='$WORKSPACE'; SCHEME='$TVOS_SCHEME'" > names-tvOS.sh
-                    echo "WORKSPACE='$WORKSPACE'; SCHEME='$WATCHOS_SCHEME'" > names-watchOS.sh
+                    - name: Xcode Version
+                      run: xcodebuild -version
+                    - name: XC Pretty
+                      run: sudo gem install xcpretty-travis-formatter
+            """
+        )
+        return yaml
+    }
+
+    fileprivate func xcodebuildYAML(configurations: [String], package: String, build: Bool, test: Bool) -> String {
+        var yaml = ""
+        let destinationName = xcodeDestination ?? ""
+        let destination = destinationName.isEmpty ? "" : "-destination \"name=\(destinationName)\""
+        yaml.append(
+            """
+            
+                    - name: Detect Workspace & Scheme (\(name))
+                      run: |
+                        WORKSPACE="\(package).xcworkspace"
+                        if [[ ! -e "$WORKSPACE" ]]
+                        then
+                        WORKSPACE="."
+                        GOTPACKAGE=$(xcodebuild -workspace . -list | (grep \(package)-Package || true))
+                        if [[ $GOTPACKAGE != "" ]]
+                        then
+                        SCHEME="\(package)-Package"
+                        else
+                        SCHEME="\(package)"
+                        fi
+                        else
+                        SCHEME="\(package)-\(name)"
+                        fi
+                        echo "set -o pipefail; export PATH='swift-latest:$PATH'; WORKSPACE='$WORKSPACE'; SCHEME='$SCHEME'" > setup.sh
             """
         )
         
@@ -138,12 +145,11 @@ public class Platform: Option {
                 yaml.append(
                     """
                     
-                            - name: Build (\(config))
-                            run: |
-                            set -o pipefail
-                            source "names-\(id).sh"
-                            export PATH="swift-latest:$PATH"
-                            xcodebuild clean build -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration \(config) CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | tee logs/xcodebuild-\(id)-build-\(config.lowercased()).log | xcpretty
+                            - name: Build (\(name) \(config))
+                              run: |
+                                source "setup.sh"
+                                echo "Building workspace $WORKSPACE scheme $SCHEME."
+                                xcodebuild clean build -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration \(config) CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | tee logs/xcodebuild-\(id)-build-\(config.lowercased()).log | xcpretty
                     """
                 )
             }
@@ -155,16 +161,17 @@ public class Platform: Option {
                 yaml.append(
                     """
                     
-                            - name: Test (\(config))
-                            run: |
-                            set -o pipefail
-                            source "names-\(id).sh"
-                            export PATH="swift-latest:$PATH"
-                            xcodebuild test -workspace "$WORKSPACE" -scheme "$SCHEME" \(destination) -configuration \(config) CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \(extraArgs) | tee logs/xcodebuild-\(id)-test-\(config.lowercased()).log | xcpretty
+                            - name: Test (\(name) \(config))
+                              run: |
+                                source "setup.sh"
+                                echo "Testing workspace $WORKSPACE scheme $SCHEME."
+                                xcodebuild test -workspace "$WORKSPACE" -scheme "$SCHEME" \(destination) -configuration \(config) CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \(extraArgs) | tee logs/xcodebuild-\(id)-test-\(config.lowercased()).log | xcpretty
                     """
                 )
             }
         }
+        
+        return yaml
     }
     
     fileprivate func uploadYAML(_ yaml: inout String) {
