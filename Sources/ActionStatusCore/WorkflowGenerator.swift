@@ -14,18 +14,37 @@ public struct Workflow {
     public let delimiter: String
 }
 
-public class WorkflowGenerator {
-    static let enableLinuxMain = false
+public class SwiftVersion: Option {
+    public enum XcodeMode {
+        case latest
+        case toolchain(branch: String)
+    }
+    
+    let linux: String
+    let mac: XcodeMode
+    
+    public init(_ id: String, name: String, linux: String, mac: XcodeMode) {
+        self.linux = linux
+        self.mac = mac
+        super.init(id, name: name)
+    }
+}
 
+public class WorkflowGenerator {
+    public let swifts = [
+        SwiftVersion("swift-50", name: "Swift 5.0", linux: "swift:5.0", mac: .latest),
+        SwiftVersion("swift-51", name: "Swift 5.1", linux: "swift:5.1", mac: .latest),
+        SwiftVersion("swift-52", name: "Swift 5.2 (nightly)", linux: "swiftlang/swift:nightly-5.2", mac: .toolchain(branch: "swift-5.2-branch")),
+        SwiftVersion("swift-nightly", name: "Swift Nightly", linux: "swiftlang/swift:nightly", mac: .toolchain(branch: "swift-5.2-branch")), // TODO: use correct branch
+    ]
+    
     public let platforms = [
-        Job("macOS", name: "macOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
-        Job("iOS", name: "iOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
-        Job("tvOS", name: "tvOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
-        Job("watchOS", name: "watchOS", platform: .mac, swift: "5.1"),  // TODO: find better way of determining Mac swift version
-        Job("linux-50", name: "Linux (Swift 5.0)", container: "swift:5.0", swift: "5.0"),
-        Job("linux-51", name: "Linux (Swift 5.1)", container: "swift:5.1", swift: "5.1"),
-        Job("linux-52", name: "Linux (Swift 5.2 Nightly)", container: "swiftlang/swift:nightly-5.2", swift: "5.2"),
-        Job("linux-n", name: "Linux (Swift Nightly)", container: "swiftlang/swift:nightly", swift: "5.2"),
+        Job("macOS", name: "macOS"),
+        Job("macOS-xcode", name: "macOS (xcodebuild)", xcodeDestination: ""),
+        Job("iOS", name: "iOS", xcodeDestination: "iPhone 11"),
+        Job("tvOS", name: "tvOS", xcodeDestination: "Apple TV"),
+        Job("watchOS", name: "watchOS", xcodeDestination: "Apple Watch Series 5 - 44mm"),
+        Job("linux", name: "Linux"),
     ]
     
     public let configurations = [
@@ -38,47 +57,33 @@ public class WorkflowGenerator {
         Option("test", name: "Run Tests"),
         Option("notify", name: "Post Notifications"),
         Option("upload", name: "Upload Logs"),
-        Option("useXcodeForMac", name: "Use Xcode For macOS Target"),
         Option("header", name: "Add a header to README.md")
     ]
     
     public init() {
     }
     
-    func enabledJobs(for repo: Repo) -> ([Job], [String]) {
+    func enabledSwifts(for repo: Repo) -> [SwiftVersion] {
+        let options = repo.settings.options
+        var enabled: [SwiftVersion] = []
+        for swift in swifts {
+            if options.contains(swift.id) {
+                enabled.append(swift)
+            }
+        }
+        return enabled
+    }
+    
+    func enabledJobs(for repo: Repo) -> [Job] {
         let options = repo.settings.options
         var jobs: [Job] = []
-        var macPlatforms: [String] = []
-        var versions: Set<String> = []
         for platform in platforms {
             if options.contains(platform.id) {
-                versions.insert(platform.swift)
-                switch platform.platform {
-                    case .mac:
-                        macPlatforms.append(platform.id)
-                    default:
-                        jobs.append(platform)
-                }
+                jobs.append(platform)
             }
         }
         
-        if macPlatforms.count > 0 {
-            let macID = macPlatforms.joined(separator: "_")
-            let macName = macPlatforms.joined(separator: ", ")
-            
-            // unless useXcodeForMac is set, remove macOS from the platforms built with xCode
-            if !repo.settings.useXcodeForMac, let index = macPlatforms.firstIndex(of: "macOS") {
-                macPlatforms.remove(at: index)
-            }
-            
-            // make a catch-all job
-            jobs.append(
-                Job(macID, name: macName, platform: .mac, xcodePlatforms: macPlatforms, swift: "5.1") // TODO: find better way of determining Mac swift version
-            )
-        }
-        
-        let sortedVersions = versions.sorted()
-        return (jobs, sortedVersions)
+        return jobs
     }
 
     func enabledConfigs(for repo: Repo) -> [String] {
@@ -120,50 +125,15 @@ public class WorkflowGenerator {
         
         """
         
-        let (jobs, swiftVersions) = enabledJobs(for: repo)
-        
-        let needsLinuxMain = WorkflowGenerator.enableLinuxMain && repo.settings.test && jobs.contains(where: { $0.platform == .linux })
-        if needsLinuxMain {
-            source.append("""
-
-            update-linuxmain:
-                name: Update Linux Main
-                runs-on: macOS-latest
-                steps:
-                - name: Checkout
-                  uses: actions/checkout@v1
-                - name: Update
-                  run: swift test --generate-linuxmain
-                - name: Commit Changes
-                  continue-on-error: true
-                  run: |
-                    git config --local user.email "action@github.com"
-                    git config --local user.name "GitHub Action"
-                    git commit -m "Updated Linux Main" -a
-                - name: Push changes
-                  continue-on-error: true
-                  uses: ad-m/github-push-action@master
-                  with:
-                    github_token: ${{ secrets.GITHUB_TOKEN }}
-
-
-        """
-            )
-        }
+        let swiftVersions = enabledSwifts(for: repo)
+        let jobs = enabledJobs(for: repo)
         
         var platformBadgeIDs: [String] = []
         var platformBadgeNames: [String] = []
         for job in jobs {
-            source.append(job.yaml(repo: repo, configurations: enabledConfigs(for: repo)))
-            if job.platform == .linux {
-                if !platformBadgeNames.contains("Linux") {
-                    platformBadgeNames.append("Linux")
-                    platformBadgeIDs.append("Linux")
-                }
-            } else {
-                platformBadgeNames.append(job.name)
-                platformBadgeIDs.append(job.id)
-            }
+            source.append(job.yaml(repo: repo, swifts: swiftVersions, configurations: enabledConfigs(for: repo)))
+            platformBadgeNames.append(job.name)
+            platformBadgeIDs.append(job.id)
         }
         
         let platformNames = platformBadgeNames.joined(separator: ", ")
