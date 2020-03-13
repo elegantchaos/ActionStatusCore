@@ -11,6 +11,8 @@ public class Option {
         self.id = id
         self.name = name
     }
+    
+    public var label: String { return name }
 }
 
 extension Option: Equatable {

@@ -11,61 +11,68 @@ public class Job: Option {
         super.init(id, name: name)
     }
 
+    public override var label: String {
+        if xcodeDestination == nil {
+            return name
+        } else {
+            return "\(name) (xcodebuild)"
+        }
+    }
+    
     public func yaml(repo: Repo, swifts: [SwiftVersion], configurations: [String]) -> String {
         let settings = repo.settings
         let package = repo.name
         let test = settings.test
         let build = settings.build
         
-        var jobsYAML = ""
+        var yaml = ""
         var xcodeToolchain: String? = nil
         
         for swift in swifts {
-            var yaml =
+            var job =
             """
             
                 \(id)-\(swift.id):
                     name: \(name)
             """
             
-            containerYAML(&yaml, swift, &xcodeToolchain)
-            commonYAML(&yaml)
+            containerYAML(&job, swift, &xcodeToolchain)
+            commonYAML(&job)
             
             if let branch = xcodeToolchain {
-                toolchainYAML(&yaml, branch)
+                toolchainYAML(&job, branch)
             }
             
             if let name = xcodeDestination {
-                xcodebuildYAML(name, &yaml, package, build, configurations, test)
+                xcodebuildYAML(name, &job, package, build, configurations, test)
             } else {
-                yaml.append(swiftYAML(build, configurations, test, swift))
+                job.append(swiftYAML(configurations: configurations, build: build, test: test, customToolchain: xcodeToolchain != nil, swift: swift))
             }
             
             if settings.upload {
-                uploadYAML(&yaml)
+                uploadYAML(&job)
             }
-            
             
             if settings.notify {
-                notifyYAML(&yaml)
+                job.append(notifyYAML(swift: swift))
             }
             
-            yaml.append("\n\n")
-            jobsYAML.append(yaml)
+            yaml.append("\(job)\n\n")
         }
         
-        return jobsYAML
+        return yaml
     }
 
-    fileprivate func swiftYAML(_ build: Bool, _ configurations: [String], _ test: Bool, _ swift: SwiftVersion) -> String {
+    fileprivate func swiftYAML(configurations: [String], build: Bool, test: Bool, customToolchain: Bool, swift: SwiftVersion) -> String {
         var yaml = ""
+        let pathFix = customToolchain ? "" : "export PATH=\"swift-latest:$PATH\"; "
         if build {
             for config in configurations {
                 yaml.append(
                     """
                     
-                        - name: Build (\(config))
-                        run: export PATH="swift-latest:$PATH"; swift build -c \(config.lowercased())
+                            - name: Build (\(config))
+                              run: \(pathFix)swift build -c \(config.lowercased())
                     """
                 )
             }
@@ -78,8 +85,8 @@ public class Job: Option {
                 yaml.append(
                     """
                     
-                        - name: Test (\(config))
-                        run: export PATH="swift-latest:$PATH"; swift test --configuration \(config.lowercased()) \(buildForTesting) \(discovery)
+                            - name: Test (\(config))
+                              run: \(pathFix)swift test --configuration \(config.lowercased()) \(buildForTesting) \(discovery)
                     """
                 )
             }
@@ -93,11 +100,11 @@ public class Job: Option {
             """
             
                 - name: Xcode Version
-                run: xcodebuild -version
+                  run: xcodebuild -version
                 - name: XC Pretty
-                run: sudo gem install xcpretty-travis-formatter
+                  run: sudo gem install xcpretty-travis-formatter
                 - name: Detect Workspace & Scheme
-                run: |
+                  run: |
                     WORKSPACE="\(package).xcworkspace"
                     if [[ ! -e "$WORKSPACE" ]]
                     then
@@ -163,6 +170,7 @@ public class Job: Option {
     fileprivate func uploadYAML(_ yaml: inout String) {
         yaml.append(
             """
+
                     - name: Upload Logs
                       uses: actions/upload-artifact@v1
                       with:
@@ -172,20 +180,22 @@ public class Job: Option {
         )
     }
     
-    fileprivate func notifyYAML(_ yaml: inout String) {
+    fileprivate func notifyYAML(swift: SwiftVersion) -> String {
+        var yaml = ""
         yaml.append(
             """
             
                     - name: Slack Notification
-                    uses: elegantchaos/slatify@master
-                    if: always()
-                    with:
-                    type: ${{ job.status }}
-                    job_name: '\(name)'
-                    mention_if: 'failure'
-                    url: ${{ secrets.SLACK_WEBHOOK }}
+                      uses: elegantchaos/slatify@master
+                      if: always()
+                      with:
+                        type: ${{ job.status }}
+                        job_name: '\(name) (\(swift.name))'
+                        mention_if: 'failure'
+                        url: ${{ secrets.SLACK_WEBHOOK }}
             """
         )
+        return yaml
     }
     
     fileprivate func toolchainYAML(_ yaml: inout String, _ branch: String) {
@@ -193,19 +203,19 @@ public class Job: Option {
             """
             
                     - name: Install Toolchain
-                    run: |
-                    branch="\(branch)"
-                    wget --quiet https://swift.org/builds/$branch/xcode/latest-build.yml
-                    grep "download:" < latest-build.yml > filtered.yml
-                    sed -e 's/-osx.pkg//g' filtered.yml > stripped.yml
-                    sed -e 's/:[^:\\/\\/]/YML="/g;s/$/"/g;s/ *=/=/g' stripped.yml > snapshot.sh
-                    source snapshot.sh
-                    echo "Installing Toolchain: $downloadYML"
-                    wget --quiet https://swift.org/builds/$branch/xcode/$downloadYML/$downloadYML-osx.pkg
-                    sudo installer -pkg $downloadYML-osx.pkg -target /
-                    ln -s "/Library/Developer/Toolchains/$downloadYML.xctoolchain/usr/bin" swift-latest
-                    export PATH="swift-latest:$PATH"
-                    swift --version
+                      run: |
+                        branch="\(branch)"
+                        wget --quiet https://swift.org/builds/$branch/xcode/latest-build.yml
+                        grep "download:" < latest-build.yml > filtered.yml
+                        sed -e 's/-osx.pkg//g' filtered.yml > stripped.yml
+                        sed -e 's/:[^:\\/\\/]/YML="/g;s/$/"/g;s/ *=/=/g' stripped.yml > snapshot.sh
+                        source snapshot.sh
+                        echo "Installing Toolchain: $downloadYML"
+                        wget --quiet https://swift.org/builds/$branch/xcode/$downloadYML/$downloadYML-osx.pkg
+                        sudo installer -pkg $downloadYML-osx.pkg -target /
+                        ln -s "/Library/Developer/Toolchains/$downloadYML.xctoolchain/usr/bin" swift-latest
+                        export PATH="swift-latest:$PATH"
+                        swift --version
             """
         )
     }

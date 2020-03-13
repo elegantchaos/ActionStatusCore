@@ -14,33 +14,18 @@ public struct Workflow {
     public let delimiter: String
 }
 
-public class SwiftVersion: Option {
-    public enum XcodeMode {
-        case latest
-        case toolchain(branch: String)
-    }
-    
-    let linux: String
-    let mac: XcodeMode
-    
-    public init(_ id: String, name: String, linux: String, mac: XcodeMode) {
-        self.linux = linux
-        self.mac = mac
-        super.init(id, name: name)
-    }
-}
 
 public class WorkflowGenerator {
     public let swifts = [
-        SwiftVersion("swift-50", name: "Swift 5.0", linux: "swift:5.0", mac: .latest),
-        SwiftVersion("swift-51", name: "Swift 5.1", linux: "swift:5.1", mac: .latest),
-        SwiftVersion("swift-52", name: "Swift 5.2 (nightly)", linux: "swiftlang/swift:nightly-5.2", mac: .toolchain(branch: "swift-5.2-branch")),
-        SwiftVersion("swift-nightly", name: "Swift Nightly", linux: "swiftlang/swift:nightly", mac: .toolchain(branch: "swift-5.2-branch")), // TODO: use correct branch
+        SwiftVersion("swift-50", name: "Swift 5.0", short: "5.0", linux: "swift:5.0", mac: .latest),
+        SwiftVersion("swift-51", name: "Swift 5.1", short: "5.1", linux: "swift:5.1", mac: .latest),
+        SwiftVersion("swift-52", name: "Swift 5.2 Nightly", short: "5.2", linux: "swiftlang/swift:nightly-5.2", mac: .toolchain(branch: "swift-5.2-branch")),
+        SwiftVersion("swift-nightly", name: "Swift Development Nightly", short: "dev", linux: "swiftlang/swift:nightly", mac: .toolchain(branch: "development")),
     ]
     
     public let platforms = [
         Job("macOS", name: "macOS"),
-        Job("macOS-xcode", name: "macOS (xcodebuild)", xcodeDestination: ""),
+        Job("macOS-xcode", name: "macOS", xcodeDestination: ""),
         Job("iOS", name: "iOS", xcodeDestination: "iPhone 11"),
         Job("tvOS", name: "tvOS", xcodeDestination: "Apple TV"),
         Job("watchOS", name: "watchOS", xcodeDestination: "Apple Watch Series 5 - 44mm"),
@@ -137,7 +122,7 @@ public class WorkflowGenerator {
         }
         
         let platformNames = platformBadgeNames.joined(separator: ", ")
-        let badges = swiftVersions.map { "![swift \($0) shield]" }.joined(separator: " ")
+        let badges = swiftVersions.map { "![swift \($0.short) shield]" }.joined(separator: " ")
         
         var header = ""
         let headerDelimiter = "[comment]: <> (End of ActionStatus Header)\n\n"
