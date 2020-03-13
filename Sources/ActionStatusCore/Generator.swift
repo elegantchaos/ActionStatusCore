@@ -6,15 +6,16 @@
 import Foundation
 import ApplicationExtensions
 
-public struct Workflow {
-    public let repo: Repo
-    public let source: String
-    public let data: Data
-    public let header: String
-    public let delimiter: String
-}
 
-public class WorkflowGenerator {
+public class Generator {
+    public struct Output {
+        public let repo: Repo
+        public let source: String
+        public let data: Data
+        public let header: String
+        public let delimiter: String
+    }
+
     public let compilers = [
         Compiler("swift-50", name: "Swift 5.0", short: "5.0", linux: "swift:5.0", mac: .latest),
         Compiler("swift-51", name: "Swift 5.1", short: "5.1", linux: "swift:5.1", mac: .latest),
@@ -119,9 +120,9 @@ public class WorkflowGenerator {
             }
         }
         
-        let xcodeID = xcodePlatforms.map({ $0.id }).joined(separator: "-")
-        let xcodeName = xcodePlatforms.map({ $0.name }).joined(separator: ", ")
-        let xcodePlatform = Platform(xcodeID, name: xcodeName, subPlatforms: xcodePlatforms)
+//        let xcodeID = xcodePlatforms.map({ $0.id }).joined(separator: "-")
+//        let xcodeName = xcodePlatforms.map({ $0.name }).joined(separator: ", ")
+        let xcodePlatform = Platform("xcode", name: "Xcode", subPlatforms: xcodePlatforms)
         source.append(xcodePlatform.yaml(repo: repo, compilers: compilers, configurations: enabledConfigs(for: repo)))
         
         return source
@@ -157,7 +158,7 @@ public class WorkflowGenerator {
          return (header, headerDelimiter)
      }
 
-    public func generateWorkflow(for repo: Repo, application: BundleInfo) -> Workflow? {
+    public func generateWorkflow(for repo: Repo, application: BundleInfo) -> Output? {
         let compilers = enabledCompilers(for: repo)
         let platforms = enabledPlatforms(for: repo)
 
@@ -165,7 +166,7 @@ public class WorkflowGenerator {
         let (header, delimiter) = generateHeader(for: repo, platforms: platforms, compilers: compilers, application: application)
         
         guard let data = source.data(using: .utf8) else { return nil }
-        return Workflow(repo: repo, source: source, data: data, header: header, delimiter: delimiter)
+        return Output(repo: repo, source: source, data: data, header: header, delimiter: delimiter)
     }
     
 }
