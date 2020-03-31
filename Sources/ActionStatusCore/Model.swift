@@ -55,6 +55,7 @@ public class Model: ObservableObject {
 public extension Model {
     func load(fromDefaultsKey key: String) {
         let decoder = Repo.dictionaryDecoder
+        store.synchronize()
         if let repoIDs = store.array(forKey: key) as? Array<String> {
             var loadedRepos: [UUID:Repo] = [:]
             for repoID in repoIDs {
@@ -82,6 +83,14 @@ public extension Model {
                 repoIDs.append(repoID)
             }
         }
+        
+        if let oldRepoIDs = store.array(forKey: key) as? Array<String> {
+            let removedIDs = Set(oldRepoIDs).subtracting(Set(repoIDs))
+            for removedID in removedIDs {
+                store.removeObject(forKey: removedID)
+            }
+        }
+        
         store.set(repoIDs, forKey: key)
     }
     
