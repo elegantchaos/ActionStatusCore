@@ -5,7 +5,7 @@
 
 import Foundation
 import ApplicationExtensions
-
+import Bundles
 
 public class Generator {
     public struct Output {
