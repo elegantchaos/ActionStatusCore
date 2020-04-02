@@ -2,17 +2,17 @@
   "object": {
     "pins": [
       {
-        "package": "ApplicationExtensions",
-        "repositoryURL": "https://github.com/elegantchaos/ApplicationExtensions.git",
+        "package": "Bundles",
+        "repositoryURL": "https://github.com/elegantchaos/Bundles.git",
         "state": {
           "branch": null,
-          "revision": "b8f48ff3f8d15ad15ab4077e17f92f3ae9e46381",
-          "version": "1.0.7"
+          "revision": "84eb63313e79fd6bbe19e2a972d96a881beb1ec4",
+          "version": "1.0.1"
         }
       },
       {
         "package": "CollectionExtensions",
-        "repositoryURL": "https://github.com/elegantchaos/CollectionExtensions.git",
+        "repositoryURL": "https://github.com/elegantchaos/CollectionExtensions",
         "state": {
           "branch": null,
           "revision": "d38d95d1458f1ef877c72584895da51e1b2d5149",
@@ -29,11 +29,29 @@
         }
       },
       {
+        "package": "Files",
+        "repositoryURL": "https://github.com/elegantchaos/Files",
+        "state": {
+          "branch": null,
+          "revision": "fab79dce95afdcc1b7c6983d6874176465bd210a",
+          "version": "1.0.4"
+        }
+      },
+      {
         "package": "Hardware",
         "repositoryURL": "https://github.com/elegantchaos/Hardware.git",
         "state": {
           "branch": null,
           "revision": "a9f223b6aa675c37b6090e3d431346f5c73a1f3d",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "package": "Images",
+        "repositoryURL": "https://github.com/elegantchaos/Images",
+        "state": {
+          "branch": null,
+          "revision": "59a9088a3f83e4e074df55e6d74b38cf52ffe75d",
           "version": "1.0.0"
         }
       },
@@ -44,6 +62,15 @@
           "branch": null,
           "revision": "e4073d0427146d2884730d0cdcb62e4ce0f80938",
           "version": "1.5.2"
+        }
+      },
+      {
+        "package": "SemanticVersion",
+        "repositoryURL": "https://github.com/elegantchaos/SemanticVersion",
+        "state": {
+          "branch": null,
+          "revision": "6bda5a45a2f687a82a0fbb002bee8ad31e44f478",
+          "version": "1.1.0"
         }
       }
     ]
