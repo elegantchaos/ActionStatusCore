@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Bundles.git",
         "state": {
           "branch": null,
-          "revision": "84eb63313e79fd6bbe19e2a972d96a881beb1ec4",
-          "version": "1.0.1"
+          "revision": "3a26a4c438cffe24a2943bbfd2aaf1acc25e79da",
+          "version": "1.0.3"
         }
       },
       {
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/elegantchaos/CollectionExtensions",
         "state": {
           "branch": null,
-          "revision": "d38d95d1458f1ef877c72584895da51e1b2d5149",
-          "version": "1.0.1"
+          "revision": "002f744b085c162f37783b8a629ae6364c558c3a",
+          "version": "1.0.2"
         }
       },
       {
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Logger.git",
         "state": {
           "branch": null,
-          "revision": "e4073d0427146d2884730d0cdcb62e4ce0f80938",
-          "version": "1.5.2"
+          "revision": "cd67757f696ce6c8353d874d867a49b8e2306e2f",
+          "version": "1.5.3"
         }
       },
       {
