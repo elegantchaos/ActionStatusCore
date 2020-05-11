@@ -46,6 +46,8 @@ public class Platform: Option {
                 toolchainYAML(&job, branch)
             } else if let version = xcodeVersion {
                 xcodeYAML(&job, version)
+            } else {
+                
             }
             
             if subPlatforms.isEmpty {
@@ -72,7 +74,12 @@ public class Platform: Option {
     }
 
     fileprivate func swiftYAML(configurations: [String], build: Bool, test: Bool, customToolchain: Bool, compiler: Compiler) -> String {
-        var yaml = ""
+        var yaml = """
+
+                    - name: Swift Version
+                      run: swift --version
+            """
+
         let pathFix = customToolchain ? "export PATH=\"swift-latest:$PATH\"; " : ""
         if build {
             for config in configurations {
@@ -107,8 +114,6 @@ public class Platform: Option {
         yaml.append(
             """
             
-                    - name: Xcode Version
-                      run: xcodebuild -version
                     - name: XC Pretty
                       run: sudo gem install xcpretty-travis-formatter
             """
@@ -226,6 +231,9 @@ public class Platform: Option {
                         sudo installer -pkg $downloadYML-osx.pkg -target /
                         ln -s "/Library/Developer/Toolchains/$downloadYML.xctoolchain/usr/bin" swift-latest
                         export PATH="swift-latest:$PATH"
+                    - name: Xcode Version
+                      run: |
+                        xcodebuild -version
                         swift --version
             """
         )
@@ -235,11 +243,11 @@ public class Platform: Option {
         yaml.append(
             """
             
-                    - name: Set Xcode Version
+                    - name: Xcode Version
                       run: |
                         sudo xcode-select -s /Applications/Xcode_\(version).app
-                        swift --version
                         xcodebuild -version
+                        swift --version
             """
         )
     }
@@ -277,12 +285,11 @@ public class Platform: Option {
                     steps:
                     - name: Checkout
                       uses: actions/checkout@v1
-                    - name: Swift Version
-                      run: swift --version
                     - name: Make Logs Directory
                       run: mkdir logs
             """
         )
     }
+
 }
 
