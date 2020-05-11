@@ -7,7 +7,7 @@ import Foundation
 
 public class Compiler: Option {
     public enum XcodeMode {
-        case latest
+        case xcode(version: String)
         case toolchain(branch: String)
     }
     

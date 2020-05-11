@@ -29,6 +29,7 @@ public class Platform: Option {
         
         var yaml = ""
         var xcodeToolchain: String? = nil
+        var xcodeVersion: String? = nil
         
         for compiler in compilers {
             var job =
@@ -38,11 +39,13 @@ public class Platform: Option {
                     name: \(name) (\(compiler.name))
             """
             
-            containerYAML(&job, compiler, &xcodeToolchain)
+            containerYAML(&job, compiler, &xcodeToolchain, &xcodeVersion)
             commonYAML(&job)
             
             if let branch = xcodeToolchain {
                 toolchainYAML(&job, branch)
+            } else if let version = xcodeVersion {
+                xcodeYAML(&job, version)
             }
             
             if subPlatforms.isEmpty {
@@ -180,6 +183,7 @@ public class Platform: Option {
 
                     - name: Upload Logs
                       uses: actions/upload-artifact@v1
+                      if: always()
                       with:
                         name: logs
                         path: logs
@@ -226,14 +230,27 @@ public class Platform: Option {
             """
         )
     }
-    
-    fileprivate func containerYAML(_ yaml: inout String, _ compiler: Compiler, _ xcodeToolchain: inout String?) {
+
+    fileprivate func xcodeYAML(_ yaml: inout String, _ version: String) {
+        yaml.append(
+            """
+            
+                    - name: Set Xcode Version
+                      run: |
+                        sudo xcode-select -s /Applications/Xcode_\(version).app
+                        swift --version
+                        xcodebuild -version
+            """
+        )
+    }
+
+    fileprivate func containerYAML(_ yaml: inout String, _ compiler: Compiler, _ xcodeToolchain: inout String?, _ xcodeVersion: inout String?) {
         switch id {
             case "linux":
                 yaml.append(
                     """
                     
-                            runs-on: ubuntu-latest
+                            runs-on: ubuntu-18.04
                             container: \(compiler.linux)
                     """
             )
@@ -247,7 +264,7 @@ public class Platform: Option {
                 )
                 
                 switch compiler.mac {
-                    case .latest: break
+                    case .xcode(let version): xcodeVersion = version
                     case .toolchain(let branch): xcodeToolchain = branch
             }
         }

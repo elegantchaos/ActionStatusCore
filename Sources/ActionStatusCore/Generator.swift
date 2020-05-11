@@ -16,9 +16,10 @@ public class Generator {
     }
 
     public let compilers = [
-        Compiler("swift-50", name: "Swift 5.0", short: "5.0", linux: "swift:5.0", mac: .latest),
-        Compiler("swift-51", name: "Swift 5.1", short: "5.1", linux: "swift:5.1", mac: .latest),
-        Compiler("swift-52", name: "Swift 5.2 Nightly", short: "5.2", linux: "swiftlang/swift:nightly-5.2", mac: .toolchain(branch: "swift-5.2-branch")),
+        Compiler("swift-50", name: "Swift 5.0", short: "5.0", linux: "swift:5.0", mac: .xcode(version: "11.2.1")),
+        Compiler("swift-51", name: "Swift 5.1", short: "5.1", linux: "swift:5.1", mac: .xcode(version: "11.3.1")),
+        Compiler("swift-52", name: "Swift 5.2", short: "5.2", linux: "swift:5.2.3-bionic", mac: .xcode(version: "11.4")),
+        Compiler("swift-53", name: "Swift 5.3 Nightly", short: "5.3", linux: "swiftlang/swift:nightly-5.3-bionic", mac: .toolchain(branch: "swift-5.3-branch")),
         Compiler("swift-nightly", name: "Swift Development Nightly", short: "dev", linux: "swiftlang/swift:nightly", mac: .toolchain(branch: "development")),
     ]
     
