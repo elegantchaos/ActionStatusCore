@@ -64,7 +64,7 @@ public struct Repo: Identifiable, Equatable, Hashable {
     
     public init() {
         id = UUID()
-        name = ""
+        name = "New Repo"
         owner = UserDefaults.standard.string(forKey: .defaultOwnerKey) ?? ""
         workflow = "Tests"
         branches = []
