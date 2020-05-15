@@ -99,7 +99,7 @@ public extension Model {
     }
     
     func update(repo: Repo) {
-        assert(items[repo.id] != nil)
+        modelChannel.log(items[repo.id] == nil ? "Added \(repo)" : "Updated \(repo)")
         items[repo.id] = repo
         sortItems()
     }
