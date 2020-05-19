@@ -19,7 +19,7 @@ import DictionaryCoding
 }
 
 
-internal extension String {
+private extension String {
     static let defaultOwnerKey = "DefaultOwner"
 }
 
@@ -62,12 +62,17 @@ public struct Repo: Identifiable, Equatable, Hashable {
     public var lastFailed: Date?
     public var lastSucceeded: Date?
     
+    public static var defaultName: String { "New Repo" }
+    public static var defaultOwner: String { UserDefaults.standard.string(forKey: .defaultOwnerKey) ?? "" }
+    public static var defaultWorkflow: String { "Tests" }
+    public static var defaultBranches: [String] { [] }
+
     public init() {
         id = UUID()
-        name = "New Repo"
-        owner = UserDefaults.standard.string(forKey: .defaultOwnerKey) ?? ""
-        workflow = "Tests"
-        branches = []
+        name = Self.defaultName
+        owner = Self.defaultOwner
+        workflow = Self.defaultWorkflow
+        branches = Self.defaultBranches
         state = .unknown
         settings = WorkflowSettings()
         paths = [:]
