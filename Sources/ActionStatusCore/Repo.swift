@@ -94,8 +94,8 @@ public struct Repo: Identifiable, Equatable, Hashable {
         storeBookmark(for: url)
     }
     
-    public func url(forDevice device: String) -> URL? {
-        guard let path = paths[device] else { return nil }
+    public func url(forDevice device: String?) -> URL? {
+        guard let device = device, let path = paths[device] else { return nil }
         
         let url = URL(fileURLWithPath: path)
         return restoreBookmark(for: url)
