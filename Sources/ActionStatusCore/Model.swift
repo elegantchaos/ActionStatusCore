@@ -48,12 +48,10 @@ public class Model: ObservableObject {
         sortItems()
         NotificationCenter.default.addObserver(self, selector: #selector(modelChangedExternally), name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
     }
-}
 
-// MARK: Public
+    // MARK: Public
 
-public extension Model {
-    func load(fromDefaultsKey key: String) {
+    public func load(fromDefaultsKey key: String) {
         let decoder = Repo.dictionaryDecoder
         store.synchronize()
         if let repoIDs = store.array(forKey: key) as? Array<String> {
@@ -73,7 +71,7 @@ public extension Model {
         }
     }
     
-    func save(toDefaultsKey key: String) {
+    public func save(toDefaultsKey key: String) {
         let encoder = DictionaryEncoder()
         var repoIDs: [String] = []
         for (id, repo) in items {
@@ -94,28 +92,28 @@ public extension Model {
         store.set(repoIDs, forKey: key)
     }
     
-    func repo(withIdentifier id: UUID) -> Repo? {
+    public func repo(withIdentifier id: UUID) -> Repo? {
         return items[id]
     }
     
-    func update(repo: Repo) {
+    public func update(repo: Repo) {
         modelChannel.log(items[repo.id] == nil ? "Added \(repo)" : "Updated \(repo)")
         items[repo.id] = repo
         sortItems()
     }
     
-    func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
+    public func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
         if var repo = items[repo.id] {
             repo.remember(url: url, forDevice: device)
             update(repo: repo)
         }
     }
     
-    func refresh() {
+    public func refresh() {
         scheduleRefresh(after: 0)
     }
     
-    func cancelRefresh() {
+    public func cancelRefresh() {
         if let timer = timer {
             modelChannel.log("Cancelled refresh.")
             timer.invalidate()
@@ -123,7 +121,7 @@ public extension Model {
         }
     }
     
-    @discardableResult func addRepo() -> Repo {
+    @discardableResult public func addRepo() -> Repo {
         let repo = Repo()
         items[repo.id] = repo
         itemIdentifiers.append(repo.id)
@@ -131,7 +129,7 @@ public extension Model {
         return repo
     }
     
-    @discardableResult func addRepo(name: String, owner: String) -> Repo {
+    @discardableResult public func addRepo(name: String, owner: String) -> Repo {
         let repo = Repo(name, owner: owner, workflow: "Tests")
         items[repo.id] = repo
         itemIdentifiers.append(repo.id)
@@ -139,7 +137,7 @@ public extension Model {
         return repo
     }
     
-    func add(fromFolders urls: [URL]) {
+    public func add(fromFolders urls: [URL]) {
         if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
             let fm = FileManager.default
             for url in urls {
@@ -155,12 +153,12 @@ public extension Model {
         }
     }
     
-    func remove(atOffsets offsets: IndexSet) {
+    public func remove(atOffsets offsets: IndexSet) {
         let ids = offsets.map({ self.itemIdentifiers[$0] })
         remove(repos: ids)
     }
     
-    func remove(repos: [UUID]) {
+    public func remove(repos: [UUID]) {
         for repoID in repos {
             items[repoID] = nil
         }
