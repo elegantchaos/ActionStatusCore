@@ -15,7 +15,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/elegantchaos/Bundles.git", from: "1.0.4"),
         .package(url: "https://github.com/elegantchaos/DictionaryCoding.git", from: "1.0.9"),
-        .package(url: "https://github.com/elegantchaos/Logger.git", from: "1.5.3"),
+        .package(url: "https://github.com/elegantchaos/Logger.git", from: "1.5.5"),
         .package(url: "https://github.com/elegantchaos/Hardware.git", from: "1.0.0")
     ],
     targets: [
