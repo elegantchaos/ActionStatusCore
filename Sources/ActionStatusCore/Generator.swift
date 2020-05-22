@@ -120,10 +120,10 @@ public class Generator {
             }
         }
         
-//        let xcodeID = xcodePlatforms.map({ $0.id }).joined(separator: "-")
-//        let xcodeName = xcodePlatforms.map({ $0.name }).joined(separator: ", ")
-        let xcodePlatform = Platform("xcode", name: "Xcode", subPlatforms: xcodePlatforms)
-        source.append(xcodePlatform.yaml(repo: repo, compilers: compilers, configurations: enabledConfigs(for: repo)))
+        if xcodePlatforms.count > 0 {
+            let xcodePlatform = Platform("xcode", name: "Xcode", subPlatforms: xcodePlatforms)
+            source.append(xcodePlatform.yaml(repo: repo, compilers: compilers, configurations: enabledConfigs(for: repo)))
+        }
         
         return source
     }
