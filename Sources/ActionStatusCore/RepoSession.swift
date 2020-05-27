@@ -51,58 +51,30 @@ public class RepoSession {
         defaults.set(lastEvent.timeIntervalSinceReferenceDate, forKey: lastEventKey)
     }
     
-    public func schedule(for deadline: DispatchTime = DispatchTime.now(), tag: String? = nil) {
+    public func requestEvents(for deadline: DispatchTime = DispatchTime.now(), tag: String? = nil) {
         networkingChannel.log("scheduling request for \(fullName) deadline: \(deadline)")
         DispatchQueue.global(qos: .background).asyncAfter(deadline: deadline) {
-            self.sendRequest(query: self.eventsQuery, tag: tag) { data, response, error in
-                self.handle(response: response, data: data, error: error)
-            }
+            self.sendRequest(query: self.eventsQuery, tag: tag, repeating: true, completionHandler: self.processEvents)
         }
     }
     
-    public func scheduleWorkflow(for deadline: DispatchTime = DispatchTime.now(), tag: String? = nil) {
+    public func requestWorkflow(for deadline: DispatchTime = DispatchTime.now(), tag: String? = nil) {
         networkingChannel.log("scheduling workflow request for \(fullName)")
         DispatchQueue.global(qos: .background).asyncAfter(deadline: deadline) {
-            self.sendRequest(query: self.workflowQuery, tag: tag) { data, response, error in
-                self.handleWorkflow(data: data, response: response, error: error)
-            }
+            self.sendRequest(query: self.workflowQuery, tag: tag, repeating: false, completionHandler: self.processWorkflow)
         }
     }
     
-    func process(response: HTTPURLResponse, events: [JSONDictionary]) {
-        guard
-            let remaining = response.value(forHTTPHeaderField: "X-RateLimit-Remaining"),
-            let tag = response.value(forHTTPHeaderField: "Etag"),
-            let interval = response.value(forHTTPHeaderField: "X-Poll-Interval"), let seconds = Int(interval) else {
-                schedule(for: DispatchTime.now().advanced(by: .seconds(60)))
-                return
-        }
-        
-        networkingChannel.log("rate limit remaining: \(remaining)")
-        
-        var latestEvent = lastEvent
-        var wasPushed = false
-        for event in events {
-            if let type = event[stringWithKey: "type"], let id = event[stringWithKey: "id"], let date = event[dateWithKey: "created_at"] {
-                if date > lastEvent {
-                    networkingChannel.log("Found new event: \(type) \(id) \(date)")
-                    if type == "PushEvent" {
-                        wasPushed = true
-                    }
-                    latestEvent = max(latestEvent, date)
-                }
-            }
-        }
-        
-        if wasPushed {
-            scheduleWorkflow()
-        }
-        
-        lastEvent = latestEvent
-        schedule(for: DispatchTime.now().advanced(by: .seconds(seconds)), tag: tag)
+    
+    enum ResponseState {
+        case updated
+        case unchanged
+        case other
     }
     
-    func sendRequest(query: String, tag: String? = nil, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) {
+    typealias Handler = (ResponseState, Data) throws -> Bool
+    
+    func sendRequest(query: String, tag: String? = nil, repeating: Bool, completionHandler: @escaping Handler ) {
         let authorization = "bearer \(context.token)"
         var request = URLRequest(url: context.endpoint.appendingPathComponent(query))
         request.addValue(authorization, forHTTPHeaderField: "Authorization")
@@ -111,115 +83,137 @@ public class RepoSession {
             request.addValue(tag, forHTTPHeaderField: "If-None-Match")
         }
         
+        var updatedTag = tag
+        var shouldRepeat = repeating
+        var repeatInterval = DispatchTimeInterval.seconds(60)
         let session = URLSession.shared
         let task = session.dataTask(with: request) { data, response, error in
             networkingChannel.log("got response for \(self.fullName)")
-            completionHandler(data, response, error)
+            if let error = error {
+                networkingChannel.log(error)
+            }
+            
+            var state: ResponseState
+            if let response = response as? HTTPURLResponse,
+                let remaining = response.value(forHTTPHeaderField: "X-RateLimit-Remaining"),
+                let tag = response.value(forHTTPHeaderField: "Etag"),
+                let data = data {
+                networkingChannel.log("rate limit remaining: \(remaining)")
+                if let seconds = response.value(forHTTPHeaderField: "X-Poll-Interval").asInt {
+                    repeatInterval = DispatchTimeInterval.seconds(seconds)
+                }
+                
+                switch response.statusCode {
+                    case 200:
+                        networkingChannel.log("got updates")
+                        state = .updated
+                    
+                    case 304:
+                        networkingChannel.log("no changes")
+                        state = .unchanged
+                    
+                    default:
+                        networkingChannel.log("Unexpected response: \(response)")
+                        state = .other
+                }
+                
+                updatedTag = tag
+                if state != .other {
+                    do {
+                        shouldRepeat = try shouldRepeat && completionHandler(state, data)
+                    } catch {
+                        networkingChannel.log("Error thrown processing data \(error)")
+                    }
+                }
+            } else {
+                print("Couldn't decode response")
+                if let data = data, let string = String(data: data, encoding: .utf8) {
+                    print(string)
+                }
+            }
+            
+            if shouldRepeat {
+                DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime.now().advanced(by: repeatInterval)) {
+                    self.sendRequest(query: query, tag: updatedTag, repeating: repeating, completionHandler: completionHandler)
+                }
+            }
         }
         
         networkingChannel.log("sent request for \(fullName)")
         task.resume()
     }
     
-    func handle(response: URLResponse?, data: Data?, error: Error?) {
-        networkingChannel.log("handled")
-        if let error = error {
-            networkingChannel.log(error)
-        }
-        
-        if let response = response as? HTTPURLResponse, let data = data, let parsed = try? JSONSerialization.jsonObject(with: data, options: []), let events = parsed as? [JSONDictionary] {
-            switch response.statusCode {
-                case 200:
-                    networkingChannel.log("got events")
-                    process(response: response, events: events)
-                
-                case 304:
-                    networkingChannel.log("no changes")
-                    process(response: response, events: events)
-                
-                default:
-                    print("Unexpected response: \(response)")
+    func processEvents(state: ResponseState, data: Data) throws -> Bool {
+        if let parsed = try? JSONSerialization.jsonObject(with: data, options: []), let events = parsed as? [JSONDictionary] {
+            var latestEvent = lastEvent
+            var wasPushed = false
+            for event in events {
+                if let type = event[stringWithKey: "type"], let id = event[stringWithKey: "id"], let date = event[dateWithKey: "created_at"] {
+                    if date > lastEvent {
+                        networkingChannel.log("Found new event: \(type) \(id) \(date)")
+                        if type == "PushEvent" {
+                            wasPushed = true
+                        }
+                        latestEvent = max(latestEvent, date)
+                    }
+                }
             }
             
-        } else {
-            print("Couldn't decode response")
-            if let data = data, let string = String(data: data, encoding: .utf8) {
-                print(string)
+            if wasPushed {
+                requestWorkflow()
             }
-        }
-    }
-    
-    func handleWorkflow(data: Data?, response: URLResponse?, error: Error?) {
-        networkingChannel.log("handled workflow")
-        if let error = error {
-            networkingChannel.log(error)
+            
+            lastEvent = latestEvent
         }
         
+        return true // always repeat
+    }
+    
+    func processWorkflow(state: ResponseState, data: Data) throws -> Bool {
         let decoder = JSONDecoder()
-        if let response = response as? HTTPURLResponse, let data = data {
-            do {
-                let runs = try decoder.decode(WorkflowRuns.self, from: data)
-                switch response.statusCode {
-                    case 200:
-                        networkingChannel.log("got events")
-                        process(response: response, run: runs.latestRun)
-                    
-                    case 304:
-                        networkingChannel.log("no changes")
-                        process(response: response, run: runs.latestRun)
-                    
-                    default:
-                        print("Unexpected response: \(response)")
-                }
-            } catch {
-                print("Couldn't decode data: \(error)")
-            }
-        } else {
-            print("Couldn't decode response")
-            if let data = data, let string = String(data: data, encoding: .utf8) {
-                print(string)
-            }
-        }
-    }
-    
-    func process(response: HTTPURLResponse, run: WorkflowRun) {
-        guard let remaining = response.value(forHTTPHeaderField: "X-RateLimit-Remaining"), let tag = response.value(forHTTPHeaderField: "Etag") else {
-            print("Bad response: \(response)")
-            return
-        }
-        
-        networkingChannel.log("rate limit remaining: \(remaining)")
-        
+        let run = try decoder.decode(WorkflowRuns.self, from: data).latestRun
         print("Run status was: \(run.status)")
-        if run.conclusion == "completed" {
+        if run.status == "completed" {
             print("Conclusion was: \(run.conclusion ?? "")")
+            return false
         } else {
-            scheduleWorkflow(for: DispatchTime.now().advanced(by: .seconds(60)), tag: tag)
+            return true
+        }
+        
+    }
+}
+
+struct WorkflowRuns: Codable {
+    let total_count: Int
+    let workflow_runs: [WorkflowRun]
+    
+    var latestRun: WorkflowRun {
+        let sorted = workflow_runs.sorted(by: \WorkflowRun.run_number)
+        return sorted[total_count - 1]
+    }
+}
+
+struct WorkflowRun: Codable {
+    let id: Int
+    let run_number: Int
+    let status: String
+    let conclusion: String?
+}
+
+extension Sequence {
+    func sorted<T: Comparable>(by keyPath: KeyPath<Element, T>) -> [Element] {
+        return sorted { a, b in
+            return a[keyPath: keyPath] < b[keyPath: keyPath]
         }
     }
 }
-    
-    struct WorkflowRuns: Codable {
-        let total_count: Int
-        let workflow_runs: [WorkflowRun]
-        
-        var latestRun: WorkflowRun {
-            let sorted = workflow_runs.sorted(by: \WorkflowRun.run_number)
-            return sorted[total_count - 1]
+
+extension Optional where Wrapped == String {
+    var asInt: Int? {
+        if let value = self {
+            return Int(value)
+        } else {
+            return nil
         }
     }
-    
-    struct WorkflowRun: Codable {
-        let id: Int
-        let run_number: Int
-        let status: String
-        let conclusion: String?
-    }
-    
-    extension Sequence {
-        func sorted<T: Comparable>(by keyPath: KeyPath<Element, T>) -> [Element] {
-            return sorted { a, b in
-                return a[keyPath: keyPath] < b[keyPath: keyPath]
-            }
-        }
 }
