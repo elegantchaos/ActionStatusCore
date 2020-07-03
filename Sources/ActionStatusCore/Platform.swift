@@ -42,8 +42,8 @@ public class Platform: Option {
             containerYAML(&job, compiler, &xcodeToolchain, &xcodeVersion)
             commonYAML(&job)
             
-            if let branch = xcodeToolchain {
-                toolchainYAML(&job, branch)
+            if let branch = xcodeToolchain, let version = xcodeVersion {
+                toolchainYAML(&job, branch, version)
             } else if let version = xcodeVersion {
                 xcodeYAML(&job, version)
             } else {
@@ -214,7 +214,7 @@ public class Platform: Option {
         return yaml
     }
     
-    fileprivate func toolchainYAML(_ yaml: inout String, _ branch: String) {
+    fileprivate func toolchainYAML(_ yaml: inout String, _ branch: String, _ version: String) {
         yaml.append(
             """
             
@@ -230,11 +230,12 @@ public class Platform: Option {
                         wget --quiet https://swift.org/builds/$branch/xcode/$downloadYML/$downloadYML-osx.pkg
                         sudo installer -pkg $downloadYML-osx.pkg -target /
                         ln -s "/Library/Developer/Toolchains/$downloadYML.xctoolchain/usr/bin" swift-latest
-                        export PATH="swift-latest:$PATH"
+                        sudo xcode-select -s /Applications/Xcode_\(version).app
+                        swift --version
                     - name: Xcode Version
                       run: |
                         xcodebuild -version
-                        swift --version
+                        xcrun swift --version
             """
         )
     }
@@ -272,8 +273,19 @@ public class Platform: Option {
                 )
                 
                 switch compiler.mac {
-                    case .xcode(let version): xcodeVersion = version
-                    case .toolchain(let branch): xcodeToolchain = branch
+                    case .xcode(let version):
+                        xcodeVersion = version
+                        
+                    case .toolchain(let version, let branch):
+                        xcodeVersion = version
+                        xcodeToolchain = branch
+                        yaml.append(
+                            """
+
+                                    env:
+                                        TOOLCHAINS: swift
+                            """
+                        )
             }
         }
     }

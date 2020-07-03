@@ -8,7 +8,7 @@ import Foundation
 public class Compiler: Option {
     public enum XcodeMode {
         case xcode(version: String)
-        case toolchain(branch: String)
+        case toolchain(version: String, branch: String)
     }
     
     let short: String
