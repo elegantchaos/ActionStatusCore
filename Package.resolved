@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "BindingsExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/BindingsExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "7431f1c8e03d54f53ec4848818ee53bb0bf34411",
+          "version": "1.0.1"
+        }
+      },
+      {
         "package": "Bundles",
         "repositoryURL": "https://github.com/elegantchaos/Bundles.git",
         "state": {
@@ -42,8 +51,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Hardware.git",
         "state": {
           "branch": null,
-          "revision": "a9f223b6aa675c37b6090e3d431346f5c73a1f3d",
-          "version": "1.0.0"
+          "revision": "ad16325e879052c73c8226399ea177e993059fcf",
+          "version": "1.0.1"
         }
       },
       {
@@ -60,8 +69,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Logger.git",
         "state": {
           "branch": null,
-          "revision": "cd67757f696ce6c8353d874d867a49b8e2306e2f",
-          "version": "1.5.3"
+          "revision": "e8a0dea5e826a6b3f7d020bd113247274991fb97",
+          "version": "1.5.5"
         }
       },
       {
@@ -70,6 +79,15 @@
         "state": {
           "branch": null,
           "revision": "6bda5a45a2f687a82a0fbb002bee8ad31e44f478",
+          "version": "1.1.0"
+        }
+      },
+      {
+        "package": "SwiftUIExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/SwiftUIExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "b093d2709967774368c5187b960f7f9e010ab583",
           "version": "1.1.0"
         }
       }
