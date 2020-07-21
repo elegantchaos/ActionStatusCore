@@ -199,7 +199,7 @@ extension View {
 
         return textFieldStyle(EditView.fieldStyle)
             .keyboardType(.namePhonePad)
-            .textContentType(.name)
+            .shim.textContentType(.name)
             .disableAutocorrection(true)
             .autocapitalization(.none)
     }

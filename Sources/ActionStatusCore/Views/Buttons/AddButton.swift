@@ -6,7 +6,6 @@
 import SwiftUI
 import SwiftUIExtensions
 
-#if canImport(UIKit)
 struct AddButton: View {
     @EnvironmentObject var viewState: ViewState
     @EnvironmentObject var model: Model
@@ -27,7 +26,6 @@ struct AddButton: View {
         }
     }
 }
-#endif
 
 struct AddButton_Previews: PreviewProvider {
     static var previews: some View {

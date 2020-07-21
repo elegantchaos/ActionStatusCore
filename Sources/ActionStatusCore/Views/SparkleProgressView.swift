@@ -4,7 +4,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import SwiftUI
-import UIKit
 
 struct SparkleProgressView: View {
     @EnvironmentObject var updater: Updater
@@ -40,6 +39,6 @@ struct SparkleProgressView: View {
 }
 
 extension Color {
-    static var defaultProgressBackground: Color { return Color(UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1.0)) }
+    static var defaultProgressBackground: Color { return .gray }
     static var defaultProgressForeground: Color { return .black }
 }
