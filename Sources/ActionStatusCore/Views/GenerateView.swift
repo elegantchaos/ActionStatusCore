@@ -62,7 +62,7 @@ struct GenerateView: View {
         if let output = generator.generateWorkflow(for: repo, application: host.info) {
             host.save(output: output)
         }
-        viewState.saveState()
+        host.saveState()
     }
     
     func fetchSettings() {

@@ -6,36 +6,62 @@
 import CollectionExtensions
 import Foundation
 import Logger
-
+import Octoid
+import JSONSession
 
 public let networkingChannel = Channel("Networking")
 
-public struct Context {
-    public let endpoint: URL
-    public let token: String
+struct ProcessEvent: Processor {
+    typealias SessionType = RepoSession
     
-    public init(endpoint: URL, token: String) {
-        self.endpoint = endpoint
-        self.token = token
+    var processors: [ProcessorBase] { return [self] }
+    
+    typealias Payload = Events
+
+    let name = "Events"
+    let codes = [200, 304]
+    
+    func process(_ events: Events, response: HTTPURLResponse, in session: RepoSession) -> RepeatStatus {
+        var wasPushed = false
+        var latestEvent = session.lastEvent
+        for event in events {
+            let date = event.created_at
+            if date > session.lastEvent {
+                if event.type == "PushEvent" {
+                    networkingChannel.log("Found new event: \(event.type) \(event.id) \(date)")
+                    wasPushed = true
+                }
+                latestEvent = max(latestEvent, date)
+            }
+        
+            if wasPushed {
+                session.scheduleWorkflow()
+            }
+        
+            session.lastEvent = latestEvent
+            return .inherited
     }
 }
 
-public class RepoSession {
+struct WorkflowProcessor: ProcessorGroup {
+    let name = "Events"
+    let processors: [ProcessorBase] = []
+}
+
+    public class RepoSession: Octoid.Session {
     let repo: Repo
-    let context: Context
+        let workflowProcessor = WorkflowProcessor()
+        let eventsProcessor = ProcessEvent()
     var lastEvent: Date
     
     public var fullName: String { return "\(repo.owner)/\(repo.name)" }
     var tagKey: String { return "\(fullName)-tag" }
     var lastEventKey: String { return "\(fullName)-lastEvent" }
     
-    var eventsQuery: String { return  "repos/\(repo.owner)/\(repo.name)/events" }
-    var workflowQuery: String { return  "repos/\(repo.owner)/\(repo.name)/actions/workflows/Tests.yml/runs" }
-    
-    public init(repo: Repo, context: Context) {
+    public init(repo: Repo, token: String) {
         self.repo = repo
-        self.context = context
         self.lastEvent = Date(timeIntervalSinceReferenceDate: 0)
+        super.init(token: token)
         load()
     }
     
@@ -53,100 +79,15 @@ public class RepoSession {
     
     public func schedule(for deadline: DispatchTime = DispatchTime.now(), tag: String? = nil) {
         networkingChannel.log("scheduling request for \(fullName) deadline: \(deadline)")
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: deadline) {
-            self.sendRequest(query: self.eventsQuery, tag: tag) { data, response, error in
-                self.handle(response: response, data: data, error: error)
-            }
-        }
+        let target = EventsTarget(name: repo.name, owner: repo.owner)
+        schedule(target: target, processors: eventsProcessor)
     }
     
     public func scheduleWorkflow(for deadline: DispatchTime = DispatchTime.now(), tag: String? = nil) {
         networkingChannel.log("scheduling workflow request for \(fullName)")
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: deadline) {
-            self.sendRequest(query: self.workflowQuery, tag: tag) { data, response, error in
-                self.handleWorkflow(data: data, response: response, error: error)
-            }
-        }
-    }
-    
-    func process(response: HTTPURLResponse, events: [JSONDictionary]) {
-        guard
-            let remaining = response.value(forHTTPHeaderField: "X-RateLimit-Remaining"),
-            let tag = response.value(forHTTPHeaderField: "Etag"),
-            let interval = response.value(forHTTPHeaderField: "X-Poll-Interval"), let seconds = Int(interval) else {
-                schedule(for: DispatchTime.now().advanced(by: .seconds(60)))
-                return
-        }
-        
-        networkingChannel.log("rate limit remaining: \(remaining)")
-        
-        var latestEvent = lastEvent
-        var wasPushed = false
-        for event in events {
-            if let type = event[stringWithKey: "type"], let id = event[stringWithKey: "id"], let date = event[dateWithKey: "created_at"] {
-                if date > lastEvent {
-                    networkingChannel.log("Found new event: \(type) \(id) \(date)")
-                    if type == "PushEvent" {
-                        wasPushed = true
-                    }
-                    latestEvent = max(latestEvent, date)
-                }
-            }
-        }
-        
-        if wasPushed {
-            scheduleWorkflow()
-        }
-        
-        lastEvent = latestEvent
-        schedule(for: DispatchTime.now().advanced(by: .seconds(seconds)), tag: tag)
-    }
-    
-    func sendRequest(query: String, tag: String? = nil, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) {
-        let authorization = "bearer \(context.token)"
-        var request = URLRequest(url: context.endpoint.appendingPathComponent(query))
-        request.addValue(authorization, forHTTPHeaderField: "Authorization")
-        request.httpMethod = "GET"
-        if let tag = tag {
-            request.addValue(tag, forHTTPHeaderField: "If-None-Match")
-        }
-        
-        let session = URLSession.shared
-        let task = session.dataTask(with: request) { data, response, error in
-            networkingChannel.log("got response for \(self.fullName)")
-            completionHandler(data, response, error)
-        }
-        
-        networkingChannel.log("sent request for \(fullName)")
-        task.resume()
-    }
-    
-    func handle(response: URLResponse?, data: Data?, error: Error?) {
-        networkingChannel.log("handled")
-        if let error = error {
-            networkingChannel.log(error)
-        }
-        
-        if let response = response as? HTTPURLResponse, let data = data, let parsed = try? JSONSerialization.jsonObject(with: data, options: []), let events = parsed as? [JSONDictionary] {
-            switch response.statusCode {
-                case 200:
-                    networkingChannel.log("got events")
-                    process(response: response, events: events)
-                
-                case 304:
-                    networkingChannel.log("no changes")
-                    process(response: response, events: events)
-                
-                default:
-                    print("Unexpected response: \(response)")
-            }
-            
-        } else {
-            print("Couldn't decode response")
-            if let data = data, let string = String(data: data, encoding: .utf8) {
-                print(string)
-            }
-        }
+        let processors = WorkflowProcessor()
+        let target = WorkflowTarget(name: repo.name, owner: repo.owner, workflow: repo.workflow)
+        schedule(target: target, processors: processors, tag: tag)
     }
     
     func handleWorkflow(data: Data?, response: URLResponse?, error: Error?) {

@@ -16,14 +16,11 @@ public enum ActionStatusError: Error {
     
 public class Model: ObservableObject {
     public typealias RepoList = [Repo]
-    public typealias RefreshBlock = () -> Void
     
     internal let store: NSUbiquitousKeyValueStore
     internal let key: String = "State"
-    internal var timer: Timer?
     internal var items: [UUID:Repo]
 
-    public var block: RefreshBlock?
     public var refreshInterval: Double = 10.0
     
     @Published public var itemIdentifiers: [UUID]
@@ -31,8 +28,7 @@ public class Model: ObservableObject {
     @Published public var failing: Int = 0
     @Published public var unreachable: Int = 0
     
-    public init(_ repos: [Repo], store: NSUbiquitousKeyValueStore = NSUbiquitousKeyValueStore.default, block: RefreshBlock? = nil) {
-        self.block = block
+    public init(_ repos: [Repo], store: NSUbiquitousKeyValueStore = NSUbiquitousKeyValueStore.default) {
         self.store = store
         
         var index: [UUID:Repo] = [:]
@@ -108,19 +104,7 @@ public class Model: ObservableObject {
             update(repo: repo)
         }
     }
-    
-    public func refresh() {
-        scheduleRefresh(after: 0)
-    }
-    
-    public func cancelRefresh() {
-        if let timer = timer {
-            modelChannel.log("Cancelled refresh.")
-            timer.invalidate()
-            self.timer = nil
-        }
-    }
-    
+     
     @discardableResult public func addRepo() -> Repo {
         let repo = Repo()
         items[repo.id] = repo
@@ -173,46 +157,7 @@ internal extension Model {
     @objc func modelChangedExternally() {
         load(fromDefaultsKey: key)
     }
-    
-    func scheduleRefresh(after interval: TimeInterval) {
-        cancelRefresh()
-        modelChannel.log("Scheduled refresh for \(interval) seconds.")
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in
-            self.doRefresh()
-        }
-    }
-    
-    func doRefresh() {
-        DispatchQueue.global(qos: .background).async {
-            modelChannel.log("Refreshing...")
-            var newState: [UUID: Repo.State] = [:]
-            for (id, repo) in self.items {
-                newState[id] = repo.checkState()
-            }
-            
-            DispatchQueue.main.async {
-                modelChannel.log("Completed Refresh")
-                
-                for (id, repo) in self.items {
-                    if let state = newState[id] {
-                        var updated = repo
-                        updated.state = state
-                        switch state {
-                            case .passing: updated.lastSucceeded = Date()
-                            case .failing: updated.lastFailed = Date()
-                            default: break
-                        }
-                        self.items[id] = updated
-                    }
-                }
-                
-                self.sortItems()
-                self.block?()
-                self.scheduleRefresh(after: self.refreshInterval)
-            }
-        }
-    }
-    
+        
     func sortItems() {
         let sorted = items.values.sorted { (r1, r2) -> Bool in
             if (r1.state == r2.state) {

@@ -109,7 +109,6 @@ public struct Repo: Identifiable, Equatable, Hashable {
                 throw ActionStatusError.couldntAccessSecurityScope
             }
             
-            // Make sure you release the security-scoped resource when you are done.
             defer { url.stopAccessingSecurityScopedResource() }
             
             let bookmarkData = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
@@ -166,32 +165,12 @@ public struct Repo: Identifiable, Equatable, Hashable {
         }
     }
     
-    func checkState() -> State {
-        // TODO: this should probably be more asynchronous
-        var newState = State.unknown
-        let queries = branches.count > 0 ? branches.map({ "?branch=\($0)" }) : [""]
-        for query in queries {
-            if let url = URL(string: "https://github.com/\(owner)/\(name)/workflows/\(workflow)/badge.svg\(query)"),
-                let data = try? Data(contentsOf: url),
-                let svg = String(data: data, encoding: .utf8) {
-                    let svgState = state(fromSVG: svg)
-                    if newState == .unknown {
-                        newState = svgState
-                    } else if svgState == .failing {
-                        newState = .failing
-                    }
-            }
-        }
-        
-        return newState
-    }
-    
     public enum GithubLocation {
         case repo
         case workflow
         case releases
         case actions
-        case badge
+        case badge(String)
     }
         
     public func githubURL(for location: GithubLocation = .workflow) -> URL {
@@ -200,7 +179,10 @@ public struct Repo: Identifiable, Equatable, Hashable {
             case .workflow: suffix = "/actions?query=workflow%3A\(workflow)"
             case .releases: suffix = "/releases"
             case .actions: suffix = "/actions"
-            case .badge: suffix = "/workflows/\(workflow)/badge.svg"
+            case .badge(let branch):
+                let query = branch.isEmpty ? "" : "?branch=\(branch)"
+                suffix = "/workflows/\(workflow)/badge.svg\(query)"
+                
             default: suffix = ""
         }
         

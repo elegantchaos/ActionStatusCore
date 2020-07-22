@@ -5,11 +5,14 @@
 
 import SwiftUI
 
-struct NoReposView: View {
+public struct NoReposView: View {
     @EnvironmentObject var model: Model
     @EnvironmentObject var viewState: ViewState
     
-    var body: some View {
+    public init() {
+    }
+    
+    public var body: some View {
         VStack(alignment: .center) {
             Spacer()
             Text("No Repos Configured").font(.largeTitle)

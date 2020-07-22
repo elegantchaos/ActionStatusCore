@@ -6,12 +6,15 @@
 import SwiftUI
 import SwiftUIExtensions
 
-struct RepoListView: View {
+public struct RepoListView: View {
     @EnvironmentObject var model: Model
     @EnvironmentObject var viewState: ViewState
     @EnvironmentObject var sheetController: SheetController
     
-    var body: some View {
+    public init() {
+    }
+    
+    public var body: some View {
         List {
             ForEach(model.itemIdentifiers, id: \.self) { repoID in
                 self.rowView(for: repoID)
@@ -24,7 +27,7 @@ struct RepoListView: View {
     
     func delete(at offsets: IndexSet) {
         model.remove(atOffsets: offsets)
-        viewState.saveState()
+        viewState.host.saveState()
     }
     
     func edit(repoID: UUID) {

@@ -32,7 +32,4 @@ public class TestModel: Model {
     
     public override func save(toDefaultsKey key: String) {
     }
-    
-    public override func refresh() {
-    }
 }

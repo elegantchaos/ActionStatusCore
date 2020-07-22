@@ -144,7 +144,7 @@ public class Generator {
 
                  [release shield]: \(repo.imgShieldURL(for: .release))
                  [platforms shield]: \(repo.imgShieldURL(forPlatforms: platformIDs)) "\(platformNames)"
-                 [tests shield]: \(repo.githubURL(for: .badge))
+                 [tests shield]: \(repo.githubURL(for: .badge("")))
                  \(swiftShields)
 
                  [swift]: https://swift.org

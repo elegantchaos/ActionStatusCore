@@ -6,11 +6,14 @@
 import SwiftUI
 import SwiftUIExtensions
 
-struct FooterView: View {
+public struct FooterView: View {
     @EnvironmentObject var updater: Updater
     @EnvironmentObject var model: Model
     
-    var body: some View {
+    public init() {
+    }
+    
+    public var body: some View {
         VStack(spacing: 10) {
             if !updater.status.isEmpty {
                 Text(updater.status).statusStyle()

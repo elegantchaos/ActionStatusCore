@@ -8,7 +8,7 @@ import SwiftUIExtensions
 import Hardware
 
 
-struct EditView: View {
+public struct EditView: View {
     #if os(tvOS)
     static let fieldStyle = DefaultTextFieldStyle()
     #else
@@ -34,7 +34,11 @@ struct EditView: View {
     @State var workflow = Repo.defaultWorkflow
     @State var branches: String = Repo.defaultBranches.joined(separator: ", ")
     
-    var body: some View {
+    public init(repoID: UUID? = nil) {
+        self.repoID = repoID
+    }
+    
+    public var body: some View {
         let localPath = repo?.url(forDevice: Device.main.identifier)?.path ?? ""
         
         return VStack() {
@@ -113,7 +117,7 @@ struct EditView: View {
             }
         }
         .onAppear() {
-            model.cancelRefresh()
+            viewState.host.pauseRefresh()
             self.load()
         }
         .alignLabels(width: $labelWidth)

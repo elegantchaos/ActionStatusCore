@@ -8,33 +8,10 @@ import SwiftUI
 
 struct PreviewHost: ApplicationHost {
     let info = BundleInfo(for: Bundle.main)
-    func saveState() {
-        
-    }
-    
-    func stateWasEdited() {
-        
-    }
-    
-    func save(output: Generator.Output) {
-        
-    }
-    
-    func openGithub(with repo: Repo, at location: Repo.GithubLocation) {
-        
-    }
 }
 
-protocol ApplicationHost {
-    var info: BundleInfo { get }
-    func saveState()
-    func stateWasEdited()
-    func save(output: Generator.Output)
-    func openGithub(with repo: Repo, at location: Repo.GithubLocation)
-}
-
-class ViewState: ObservableObject {
-    enum TextSize: Int {
+public class ViewState: ObservableObject {
+    public enum TextSize: Int {
         case automatic = 0
         case small = 1
         case medium = 2
@@ -53,30 +30,26 @@ class ViewState: ObservableObject {
         var rowHeight: CGFloat { return 0 }
     }
     
-    @Published var isEditing: Bool = false
-    @Published var selectedID: UUID? = nil
-    @Published var repoTextSize: TextSize = .automatic
+    @Published public var isEditing: Bool = false
+    @Published public var selectedID: UUID? = nil
+    @Published public var repoTextSize: TextSize = .automatic
 
     let host: ApplicationHost
-    let padding: CGFloat = 10
+    public let padding: CGFloat = 10
     let editIcon = "info.circle"
     let startEditingIcon = "lock.fill"
     let stopEditingIcon = "lock.open.fill"
     
     let formHeaderFont = Font.headline
     
-    init(host: ApplicationHost) {
+    public init(host: ApplicationHost) {
         self.host = host
     }
     
     @discardableResult func addRepo(to model: Model) -> Repo {
         let newRepo = model.addRepo()
-        saveState()
+        host.saveState()
         selectedID = newRepo.id
         return newRepo
-    }
-    
-    func saveState() {
-        host.saveState()
     }
 }
