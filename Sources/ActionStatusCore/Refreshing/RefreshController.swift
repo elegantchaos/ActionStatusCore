@@ -17,7 +17,7 @@ public class RefreshController {
     internal let model: Model
     internal var state: RefreshState = .paused(1)
 
-    internal init(model: Model) {
+    public init(model: Model) {
         self.model = model
     }
 

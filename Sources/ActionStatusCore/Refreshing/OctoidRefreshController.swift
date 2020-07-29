@@ -12,33 +12,45 @@ let server = "api.github.com"
 
 public class OctoidRefreshController: RefreshController {
     internal var sessions: [RepoPollingSession]
+    internal let token: String
     
-    override public init(model: Model) {
+    public init(model: Model, token: String) {
         self.sessions = []
+        self.token = token
         super.init(model: model)
     }
 
     override func startRefresh() {
-        do {
-            let token = try Keychain.default.getToken(user: user, server: server)
-            var sessions: [RepoPollingSession] = []
-            for repo in model.items.values {
+        var sessions: [RepoPollingSession] = []
+        for repo in model.items.values {
+//            if repo.name == "_privateTest" {
                 let session = RepoPollingSession(controller: self, repo: repo, token: token)
-                session.scheduleEvents()
+                session.scheduleWorkflowRepeating()
                 sessions.append(session)
-            }
-        } catch {
-            refreshChannel.log("Failed to start refresh: \(error)")
+//            }
         }
+        self.sessions = sessions
     }
     
     override func cancelRefresh() {
-        
+        for session in sessions {
+//            session
+        }
+        self.sessions.removeAll()
     }
     
     func update(repo: Repo, with run: WorkflowRun) {
         print("Latest status for \(repo.name) was: \(run.status)")
         print("Conclusion was: \(run.conclusion ?? "")")
-        model.update(repo: repo)
+        var updated = repo
+        if run.conclusion == "failure" {
+            updated.state = .failing
+        } else if run.conclusion == "success" {
+            updated.state = .passing
+        }
+        
+        DispatchQueue.main.async {
+            self.model.update(repo: updated)
+        }
     }
 }

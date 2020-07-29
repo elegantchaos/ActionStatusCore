@@ -20,10 +20,10 @@ struct WorkflowRunsProcessor: Processor {
         
         let latest = runs.latestRun
         session.refreshController.update(repo: session.repo, with: latest)
-        if latest.conclusion == "completed" {
-            return .cancel
-        } else {
+//        if latest.conclusion == "completed" {
+//            return .cancel
+//        } else {
             return .inherited
-        }
+//        }
     }
 }
