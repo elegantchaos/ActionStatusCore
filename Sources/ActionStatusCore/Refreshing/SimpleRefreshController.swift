@@ -15,9 +15,9 @@ import Foundation
 public class SimpleRefreshController: RefreshController {
     internal let timer: OneShotTimer
     
-    override public init(model: Model, block: @escaping RefreshBlock) {
+    override public init(model: Model) {
         self.timer = OneShotTimer()
-        super.init(model: model, block: block)
+        super.init(model: model)
     }
     
     override func startRefresh() {
@@ -48,21 +48,27 @@ internal extension SimpleRefreshController {
                 refreshChannel.log("Completed Refresh")
                 switch state {
                     case .running:
+                        var changed = false
                         for (id, repo) in model.items {
                             if let state = newState[id] {
                                 var updated = repo
-                                updated.state = state
-                                switch state {
-                                    case .passing: updated.lastSucceeded = Date()
-                                    case .failing: updated.lastFailed = Date()
-                                    default: break
+                                if state != updated.state {
+                                    updated.state = state
+                                    switch state {
+                                        case .passing: updated.lastSucceeded = Date()
+                                        case .failing: updated.lastFailed = Date()
+                                        default: break
+                                    }
+                                    model.items[id] = updated
+                                    changed = true
                                 }
-                                model.items[id] = updated
                             }
                         }
                         
-                        model.sortItems()
-                        self.block?()
+                        if changed {
+                            model.sortItems()
+                        }
+                        
                         timer.schedule(after: model.refreshInterval) { _ in
                             self.doRefresh()
                         }

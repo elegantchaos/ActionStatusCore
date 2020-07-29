@@ -8,7 +8,7 @@ import Logger
 import SwiftUI
 import Hardware
 
-let modelChannel = Channel("com.elegantchaos.actionstatus.Model")
+public let modelChannel = Channel("com.elegantchaos.actionstatus.Model")
 
 public enum ActionStatusError: Error {
     case couldntAccessSecurityScope
@@ -48,6 +48,7 @@ public class Model: ObservableObject {
     // MARK: Public
 
     public func load(fromDefaultsKey key: String) {
+        modelChannel.log("Loading from key \(key)")
         let decoder = Repo.dictionaryDecoder
         store.synchronize()
         if let repoIDs = store.array(forKey: key) as? Array<String> {
@@ -68,6 +69,7 @@ public class Model: ObservableObject {
     }
     
     public func save(toDefaultsKey key: String) {
+        modelChannel.log("Saving to key \(key)")
         let encoder = DictionaryEncoder()
         var repoIDs: [String] = []
         for (id, repo) in items {

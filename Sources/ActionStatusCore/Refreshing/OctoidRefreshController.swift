@@ -13,9 +13,9 @@ let server = "api.github.com"
 public class OctoidRefreshController: RefreshController {
     internal var sessions: [RepoPollingSession]
     
-    override public init(model: Model, block: @escaping RefreshBlock) {
+    override public init(model: Model) {
         self.sessions = []
-        super.init(model: model, block: block)
+        super.init(model: model)
     }
 
     override func startRefresh() {

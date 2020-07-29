@@ -178,7 +178,6 @@ public struct EditView: View {
         let repo = self.repo ?? Repo()
         let updated = update(repo: repo)
         model.update(repo: updated)
-        viewState.host.stateWasEdited()
     }
     
     func update(repo: Repo) -> Repo {

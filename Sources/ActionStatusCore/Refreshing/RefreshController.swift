@@ -17,12 +17,8 @@ public class RefreshController {
     internal let model: Model
     internal var state: RefreshState = .paused(1)
 
-    public typealias RefreshBlock = () -> Void
-    public var block: RefreshBlock?
-
-    internal init(model: Model, block: @escaping RefreshBlock) {
+    internal init(model: Model) {
         self.model = model
-        self.block = block
     }
 
     internal func startRefresh() { fatalError("needs overriding") }
