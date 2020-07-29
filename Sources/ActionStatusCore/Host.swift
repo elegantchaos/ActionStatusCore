@@ -12,8 +12,10 @@ public protocol ApplicationHost {
     func stateWasEdited()
     func save(output: Generator.Output)
     func openGithub(with repo: Repo, at location: Repo.GithubLocation)
+    
     func pauseRefresh()
     func resumeRefresh()
+    func didRefresh()
 }
 
 extension ApplicationHost {
@@ -43,5 +45,7 @@ extension ApplicationHost {
     func resumeRefresh() {
         
     }
-
+    func didRefresh() {
+        
+    }
 }

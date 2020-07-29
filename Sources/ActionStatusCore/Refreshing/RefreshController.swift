@@ -4,8 +4,11 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import Foundation
+import Logger
 
-protocol RefreshController {
+let refreshChannel = Channel("com.elegantchaos.actionstatus.refresh")
+
+public protocol RefreshController {
     func pause()
     func resume()
 }

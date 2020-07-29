@@ -6,12 +6,15 @@
 import SwiftUI
 import SwiftUIExtensions
 
-struct AddButton: View {
+public struct AddButton: View {
     @EnvironmentObject var viewState: ViewState
     @EnvironmentObject var model: Model
     @EnvironmentObject var sheetController: SheetController
     
-    var body: some View {
+    public init() {
+    }
+    
+    public var body: some View {
         Button(action: addRepo ) {
             Text("Add")
         }

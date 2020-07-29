@@ -156,6 +156,7 @@ public struct EditView: View {
     }
     
     func dismiss() {
+        viewState.host.resumeRefresh()
         presentation.wrappedValue.dismiss()
     }
     
@@ -186,6 +187,7 @@ public struct EditView: View {
         updated.owner = trimmedOwner
         updated.workflow = trimmedWorkflow
         updated.branches = trimmedBranches
+        updated.state = .unknown
         return updated
     }
 }

@@ -34,7 +34,7 @@ public class ViewState: ObservableObject {
     @Published public var selectedID: UUID? = nil
     @Published public var repoTextSize: TextSize = .automatic
 
-    let host: ApplicationHost
+    public let host: ApplicationHost
     public let padding: CGFloat = 10
     let editIcon = "info.circle"
     let startEditingIcon = "lock.fill"

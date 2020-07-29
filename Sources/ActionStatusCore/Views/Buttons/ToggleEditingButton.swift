@@ -6,10 +6,13 @@
 import SwiftUI
 import SwiftUIExtensions
 
-struct ToggleEditingButton: View {
+public struct ToggleEditingButton: View {
     @EnvironmentObject var viewState: ViewState
 
-    var body: some View {
+    public init() {
+    }
+    
+    public var body: some View {
         Button(action: toggleEditing) {
             SystemImage(viewState.isEditing ? viewState.stopEditingIcon : viewState.startEditingIcon).frame(width: 32, height: 32, alignment: .center)
         }.accessibility(identifier: "toggleEditing")

@@ -12,28 +12,30 @@ import Foundation
 /// This is a bit of a hack and only gives us the bare
 /// details of the state of the repo: passing or failing.
 
-struct SimpleRefreshController: RefreshController {
+public struct SimpleRefreshController: RefreshController {
     internal let model: Model
     internal let timer: OneShotTimer
     
     public typealias RefreshBlock = () -> Void
     public var block: RefreshBlock?
     
-    init(model: Model, block: @escaping RefreshBlock) {
+    public init(model: Model, block: @escaping RefreshBlock) {
         self.model = model
         self.block = block
         self.timer = OneShotTimer()
     }
     
     public func resume() {
+        refreshChannel.log("Resumed refresh.")
         timer.schedule(after: 0) { _ in
             self.doRefresh()
         }
     }
     
     public func pause() {
+        refreshChannel.log("Paused refresh.")
         if timer.cancel() {
-            modelChannel.log("Cancelled refresh.")
+            refreshChannel.log("Cancelled refresh.")
         }
     }
 }
@@ -41,14 +43,14 @@ struct SimpleRefreshController: RefreshController {
 internal extension SimpleRefreshController {
     func doRefresh() {
         DispatchQueue.global(qos: .background).async {
-            modelChannel.log("Refreshing...")
+            refreshChannel.log("Refreshing...")
             var newState: [UUID: Repo.State] = [:]
             for (id, repo) in model.items {
                 newState[id] = checkState(for: repo)
             }
             
             DispatchQueue.main.async {
-                modelChannel.log("Completed Refresh")
+                refreshChannel.log("Completed Refresh")
                 
                 for (id, repo) in model.items {
                     if let state = newState[id] {
