@@ -15,13 +15,15 @@ public class RepoPollingSession: Octoid.Session {
     let repo: Repo // TODO: add a SessionSession (need a better name) to Session and pass that to Processors instead of the Session
     let workflowProcessor = WorkflowRunsProcessor()
     let eventsProcessor = EventsProcessor()
+    let refreshController: OctoidRefreshController
     var lastEvent: Date
     
     public var fullName: String { return "\(repo.owner)/\(repo.name)" }
     var tagKey: String { return "\(fullName)-tag" }
     var lastEventKey: String { return "\(fullName)-lastEvent" }
     
-    public init(repo: Repo, token: String) {
+    public init(controller: OctoidRefreshController, repo: Repo, token: String) {
+        self.refreshController = controller
         self.repo = repo
         self.lastEvent = Date(timeIntervalSinceReferenceDate: 0)
         super.init(token: token)

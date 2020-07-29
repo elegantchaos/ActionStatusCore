@@ -12,27 +12,22 @@ import Foundation
 /// This is a bit of a hack and only gives us the bare
 /// details of the state of the repo: passing or failing.
 
-public struct SimpleRefreshController: RefreshController {
-    internal let model: Model
+public class SimpleRefreshController: RefreshController {
     internal let timer: OneShotTimer
     
-    public typealias RefreshBlock = () -> Void
-    public var block: RefreshBlock?
-    
-    public init(model: Model, block: @escaping RefreshBlock) {
-        self.model = model
-        self.block = block
+    override public init(model: Model, block: @escaping RefreshBlock) {
         self.timer = OneShotTimer()
+        super.init(model: model, block: block)
     }
     
-    public func resume() {
+    override func startRefresh() {
         refreshChannel.log("Resumed refresh.")
         timer.schedule(after: 0) { _ in
             self.doRefresh()
         }
     }
     
-    public func pause() {
+    override func cancelRefresh() {
         refreshChannel.log("Paused refresh.")
         if timer.cancel() {
             refreshChannel.log("Cancelled refresh.")
@@ -42,7 +37,7 @@ public struct SimpleRefreshController: RefreshController {
 
 internal extension SimpleRefreshController {
     func doRefresh() {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .background).async { [self] in
             refreshChannel.log("Refreshing...")
             var newState: [UUID: Repo.State] = [:]
             for (id, repo) in model.items {
@@ -51,24 +46,29 @@ internal extension SimpleRefreshController {
             
             DispatchQueue.main.async {
                 refreshChannel.log("Completed Refresh")
-                
-                for (id, repo) in model.items {
-                    if let state = newState[id] {
-                        var updated = repo
-                        updated.state = state
-                        switch state {
-                        case .passing: updated.lastSucceeded = Date()
-                        case .failing: updated.lastFailed = Date()
-                        default: break
+                switch state {
+                    case .running:
+                        for (id, repo) in model.items {
+                            if let state = newState[id] {
+                                var updated = repo
+                                updated.state = state
+                                switch state {
+                                    case .passing: updated.lastSucceeded = Date()
+                                    case .failing: updated.lastFailed = Date()
+                                    default: break
+                                }
+                                model.items[id] = updated
+                            }
                         }
-                        model.items[id] = updated
-                    }
-                }
-                
-                model.sortItems()
-                self.block?()
-                timer.schedule(after: model.refreshInterval) { _ in
-                    self.doRefresh()
+                        
+                        model.sortItems()
+                        self.block?()
+                        timer.schedule(after: model.refreshInterval) { _ in
+                            self.doRefresh()
+                        }
+                        
+                    default:
+                        refreshChannel.log("Skipping Update (We Are Paused)")
                 }
             }
         }

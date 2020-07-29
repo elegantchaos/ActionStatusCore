@@ -19,9 +19,8 @@ struct WorkflowRunsProcessor: Processor {
     func process(_ runs: WorkflowRuns, response: HTTPURLResponse, in session: RepoPollingSession) -> RepeatStatus {
         
         let latest = runs.latestRun
-        print("Latest status for \(session.repo.name) was: \(latest.status)")
+        session.refreshController.update(repo: session.repo, with: latest)
         if latest.conclusion == "completed" {
-            print("Conclusion was: \(latest.conclusion ?? "")")
             return .cancel
         } else {
             return .inherited
