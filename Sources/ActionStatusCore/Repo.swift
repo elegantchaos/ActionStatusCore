@@ -111,7 +111,7 @@ public struct Repo: Identifiable, Equatable, Hashable {
             
             defer { url.stopAccessingSecurityScopedResource() }
             
-            let bookmarkData = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+            let bookmarkData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
             UserDefaults.standard.set(bookmarkData, forKey: "bookmark:\(path)")
             modelChannel.log("Stored local bookmark data for \(url.lastPathComponent).")
         } catch {
