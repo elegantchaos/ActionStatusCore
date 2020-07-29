@@ -4,6 +4,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import SwiftUI
+import Files
 import DictionaryCoding
 
 @dynamicMemberLookup public struct WorkflowSettings: Codable, Equatable {
@@ -21,6 +22,10 @@ import DictionaryCoding
 
 private extension String {
     static let defaultOwnerKey = "DefaultOwner"
+}
+
+private extension URL {
+    var bookmarkKey: String { "bookmark:\(absoluteURL.path)" }
 }
 
 public struct Repo: Identifiable, Equatable, Hashable {
@@ -103,38 +108,27 @@ public struct Repo: Identifiable, Equatable, Hashable {
     
     
     func storeBookmark(for url: URL) {
-        let path = url.absoluteURL.path
-        do {
-            guard url.startAccessingSecurityScopedResource() else {
-                throw ActionStatusError.couldntAccessSecurityScope
-            }
-            
-            defer { url.stopAccessingSecurityScopedResource() }
-            
-            let bookmarkData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-            UserDefaults.standard.set(bookmarkData, forKey: "bookmark:\(path)")
+        if let bookmark = url.secureBookmark() {
+            UserDefaults.standard.set(bookmark, forKey: url.bookmarkKey)
             modelChannel.log("Stored local bookmark data for \(url.lastPathComponent).")
-        } catch {
-            modelChannel.log("Couldn't make bookmark for \(url).\n\(error)")
+        } else {
+            modelChannel.log("Couldn't make bookmark for \(url.lastPathComponent)")
         }
     }
     
     func restoreBookmark(for url: URL) -> URL {
-        let path = url.absoluteURL.path
-        if let data = UserDefaults.standard.data(forKey: "bookmark:\(path)") {
-            do {
-                var isStale = false
-                let resolved = try URL(resolvingBookmarkData: data, bookmarkDataIsStale: &isStale)
-                if !isStale {
-                    modelChannel.log("Resolved local bookmark data for \(url.lastPathComponent).")
-                    return resolved
-                }
-            } catch {
-            modelChannel.log("Couldn't retrieve bookmark for \(url).\n\(error)")
-            }
+        guard let data = UserDefaults.standard.data(forKey: url.bookmarkKey) else {
+            modelChannel.log("No bookmark stored for \(url.lastPathComponent)")
+            return url
         }
-    
-        return url
+        
+        guard let resolved = URL.resolveSecureBookmark(data) else {
+            modelChannel.log("Couldn't resolve bookmark for \(url.lastPathComponent)")
+            return url
+        }
+        
+        modelChannel.log("Resolved local bookmark data for \(url.lastPathComponent).")
+        return resolved
     }
 
     func state(fromSVG svg: String) -> State {
