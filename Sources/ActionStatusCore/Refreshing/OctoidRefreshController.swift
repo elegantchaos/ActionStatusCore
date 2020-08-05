@@ -25,7 +25,7 @@ public class OctoidRefreshController: RefreshController {
         for repo in model.items.values {
 //            if repo.name == "_privateTest" {
                 let session = RepoPollingSession(controller: self, repo: repo, token: token)
-                session.scheduleWorkflowRepeating()
+                session.scheduleEvents()
                 sessions.append(session)
 //            }
         }

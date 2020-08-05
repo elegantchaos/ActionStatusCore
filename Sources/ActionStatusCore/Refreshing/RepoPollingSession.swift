@@ -51,13 +51,6 @@ public class RepoPollingSession: Octoid.Session {
     public func scheduleWorkflow() {
         networkingChannel.log("scheduling workflow request for \(fullName)")
         let resource = WorkflowResource(name: repo.name, owner: repo.owner, workflow: repo.workflow)
-        poll(target: resource, processors: workflowProcessor)
-    }
-    
-    public func scheduleWorkflowRepeating() {
-        networkingChannel.log("scheduling workflow request for \(fullName)")
-        let resource = WorkflowResource(name: repo.name, owner: repo.owner, workflow: repo.workflow)
         poll(target: resource, processors: workflowProcessor, repeatingEvery: 30.0)
     }
-
 }
