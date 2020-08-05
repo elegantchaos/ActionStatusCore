@@ -112,10 +112,20 @@ public class Model: ObservableObject {
         return items[id]
     }
     
-    public func update(repo: Repo) {
-        modelChannel.log(items[repo.id] == nil ? "Added \(repo)" : "Updated \(repo)")
-        items[repo.id] = repo
-        sortItems()
+    public func update(repo: Repo, addIfMissing: Bool = true) {
+        let update: Bool
+        let item = items[repo.id]
+        if let existing = item, repo != existing {
+            update = true
+        } else {
+            update = (item == nil) && addIfMissing
+        }
+        
+        if update {
+            modelChannel.log(items[repo.id] == nil ? "Added \(repo)" : "Updated \(repo)")
+            items[repo.id] = repo
+            sortItems()
+        }
     }
     
     public func remember(url: URL, forDevice device: String, inRepo repo: Repo) {
