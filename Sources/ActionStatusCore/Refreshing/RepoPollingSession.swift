@@ -10,7 +10,6 @@ import Octoid
 import JSONSession
 
 
-
 public class RepoPollingSession: Octoid.Session {
     let repo: Repo // TODO: add a SessionSession (need a better name) to Session and pass that to Processors instead of the Session
     let workflowProcessor = WorkflowRunsProcessor()
@@ -28,10 +27,6 @@ public class RepoPollingSession: Octoid.Session {
         self.lastEvent = Date(timeIntervalSinceReferenceDate: 0)
         super.init(token: token)
         load()
-    }
-    
-    func cancel() {
-        // TODO:
     }
     
     func load() {
