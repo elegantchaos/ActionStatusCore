@@ -48,10 +48,12 @@ public struct Repo: Identifiable, Equatable, Hashable {
 
     }
     
-    public enum State: Int, Codable {
+    public enum State: UInt, Codable {
         case failing = 0
         case passing = 1
         case unknown = 2
+        case queued = 3
+        case running = 4
     }
 
     public typealias LocalPathDictionary = [String:String]
@@ -147,15 +149,17 @@ public struct Repo: Identifiable, Equatable, Hashable {
             case .unknown: name = "questionmark.circle"
             case .failing: name = "xmark.circle"
             case .passing: name = "checkmark.circle"
+            case .running: name = "arrow.triangle.2.circlepath"
+            case .queued: name = "clock.arrow.circlepath"
         }
         return name
     }
 
     public var statusColor: Color {
         switch state {
-            case .unknown: return .black
             case .failing: return .red
             case .passing: return .green
+            default: return .black
         }
     }
     
