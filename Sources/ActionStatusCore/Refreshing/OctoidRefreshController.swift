@@ -22,7 +22,7 @@ public class OctoidRefreshController: RefreshController {
 
     override func startRefresh() {
         var sessions: [RepoPollingSession] = []
-        let filter: String? = "Coverage"
+        let filter: String? = nil
         for repo in model.items.values {
             if filter == nil || filter == repo.name {
                 let session = RepoPollingSession(controller: self, repo: repo, token: token)
@@ -52,8 +52,7 @@ public class OctoidRefreshController: RefreshController {
     }
     
     func update(repo: Repo, with run: WorkflowRun) {
-        print("Latest status for \(repo.name) was: \(run.status)")
-        print("Conclusion was: \(run.conclusion ?? "")")
+        modelChannel.log("\(repo.name) status: \(run.status), conclusion: \(run.conclusion ?? "")")
         var updated = repo
         switch run.status {
             case "queued":
