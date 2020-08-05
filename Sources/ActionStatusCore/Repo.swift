@@ -49,9 +49,9 @@ public struct Repo: Identifiable, Equatable, Hashable {
     }
     
     public enum State: UInt, Codable {
-        case failing = 0
+        case unknown = 0
         case passing = 1
-        case unknown = 2
+        case failing = 2
         case queued = 3
         case running = 4
     }

@@ -14,9 +14,11 @@ struct EventsProcessor: Processor {
     let name = "events"
     let codes = [200, 304]
     
-    var processors: [ProcessorBase] { return [self] }
-    
-    func process(_ events: Events, response: HTTPURLResponse, in session: RepoPollingSession) -> RepeatStatus {
+    var processors: [ProcessorBase] {
+    return [self, MessageProcessor<RepoPollingSession>()]
+    }
+
+    func process(_ events: Events, response: HTTPURLResponse, for request: Request, in session: RepoPollingSession) -> RepeatStatus {
         var wasPushed = false
         var latestEvent = session.lastEvent
         for event in events {

@@ -14,9 +14,11 @@ struct WorkflowRunsProcessor: Processor {
     let codes = [200, 304]
     let name = "workflows"
     
-    var processors: [ProcessorBase] { return [self] }
+    var processors: [ProcessorBase] {
+        return [self, MessageProcessor<RepoPollingSession>()]
+    }
     
-    func process(_ runs: WorkflowRuns, response: HTTPURLResponse, in session: RepoPollingSession) -> RepeatStatus {
+    func process(_ runs: WorkflowRuns, response: HTTPURLResponse, for request: Request, in session: RepoPollingSession) -> RepeatStatus {
         
         let latest = runs.latestRun
         session.refreshController.update(repo: session.repo, with: latest)

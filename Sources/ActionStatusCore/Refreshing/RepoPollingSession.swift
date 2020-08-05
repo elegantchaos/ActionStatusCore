@@ -30,6 +30,10 @@ public class RepoPollingSession: Octoid.Session {
         load()
     }
     
+    func cancel() {
+        // TODO:
+    }
+    
     func load() {
         let seconds = UserDefaults.standard.double(forKey: lastEventKey)
         if seconds != 0 {
@@ -52,5 +56,17 @@ public class RepoPollingSession: Octoid.Session {
         networkingChannel.log("scheduling workflow request for \(fullName)")
         let resource = WorkflowResource(name: repo.name, owner: repo.owner, workflow: repo.workflow)
         poll(target: resource, processors: workflowProcessor, repeatingEvery: 30.0)
+    }
+}
+
+extension RepoPollingSession: MessageReceiver {
+    public func received(_ message: Message, response: HTTPURLResponse, for request: Request) -> RepeatStatus {
+        // we got an error back from a request
+        refreshController.update(repo: repo, message: message)
+        if (request.resource is WorkflowResource) && (message.message == "Not Found") {
+            // there's no workflow, so don't keep polling for it
+            return .cancel
+        }
+        return .inherited
     }
 }

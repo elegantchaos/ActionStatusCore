@@ -26,7 +26,25 @@ public class Model: ObservableObject {
     @Published public var itemIdentifiers: [UUID]
     @Published public var passing: Int = 0
     @Published public var failing: Int = 0
+    @Published public var running: Int = 0
+    @Published public var queued: Int = 0
     @Published public var unreachable: Int = 0
+    
+    public var combinedState: Repo.State {
+        let state: Repo.State
+        if running > 0 {
+            state = .running
+        } else if queued > 0 {
+            state = .queued
+        } else if failing > 0 {
+            state = .failing
+        } else if passing > 0 {
+            state = .passing
+        } else {
+            state = .unknown
+        }
+        return state
+    }
     
     public init(_ repos: [Repo], store: NSUbiquitousKeyValueStore = NSUbiquitousKeyValueStore.default) {
         self.store = store
@@ -166,7 +184,7 @@ internal extension Model {
                 return r1.name < r2.name
             }
             
-            return r1.state.rawValue < r2.state.rawValue
+            return r1.state.rawValue > r2.state.rawValue
         }
         
         let set = NSCountedSet()
@@ -174,6 +192,8 @@ internal extension Model {
 
         passing = set.count(for: Repo.State.passing)
         failing = set.count(for: Repo.State.failing)
+        running = set.count(for: Repo.State.running)
+        queued = set.count(for: Repo.State.queued)
         unreachable = set.count(for: Repo.State.unknown)
         
         itemIdentifiers = sorted.map({ $0.id })

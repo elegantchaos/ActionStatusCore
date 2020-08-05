@@ -26,7 +26,21 @@ public struct FooterView: View {
                             Text("\(model.failing) failing.")
                         }
                     }
-                    
+
+                    if model.queued > 0 {
+                        HStack(spacing: 4) {
+                            SystemImage("ellipsis").foregroundColor(.black)
+                            Text("\(model.queued) queued.")
+                        }
+                    }
+
+                    if model.running > 0 {
+                        HStack(spacing: 4) {
+                            SystemImage("arrow.triangle.2.circlepath.fill").foregroundColor(.black)
+                            Text("\(model.running) running.")
+                        }
+                    }
+
                     if model.unreachable > 0 {
                         HStack(spacing: 4) {
                             SystemImage("exclamationmark.triangle.fill").foregroundColor(.yellow)
@@ -55,22 +69,4 @@ public struct FooterView: View {
     var showProgress: Bool {
         return (updater.progress > 0.0) && (updater.progress < 1.0)
     }
-    
-    var statusText: String {
-        guard updater.status.isEmpty else {
-            return updater.status
-        }
-        
-        var text = "Monitoring \(model.itemIdentifiers.count) repos."
-        if model.failing > 0 {
-            text += " \(model.failing) failing."
-        }
-        
-        if model.unreachable > 0 {
-            text += " \(model.unreachable) unreachable."
-        }
-        
-        return text
-    }
-    
 }
