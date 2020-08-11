@@ -27,8 +27,8 @@ public class Model: ObservableObject {
     @Published public var running: Int = 0
     @Published public var queued: Int = 0
     @Published public var unreachable: Int = 0
-    @Published public var defaultOwner: String = ""
-    @Published public var defaultName = "New Repo"
+    @Published public var defaultOwner = ""
+    @Published public var defaultName = ""
     @Published public var defaultWorkflow = "Tests"
     @Published public var defaultBranches: [String] = []
 
