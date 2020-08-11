@@ -9,6 +9,7 @@ import SwiftUIExtensions
 public struct FooterView: View {
     @EnvironmentObject var updater: Updater
     @EnvironmentObject var model: Model
+    @EnvironmentObject var sheetController: SheetController
     
     public init() {
     }
@@ -47,6 +48,8 @@ public struct FooterView: View {
                             Text("\(model.unreachable) unreachable.")
                         }
                     }
+                    
+                    PreferencesButton()
                 }.statusStyle()
             }
             

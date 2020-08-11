@@ -39,6 +39,7 @@ public class ViewState: ObservableObject {
     let editIcon = "info.circle"
     let startEditingIcon = "lock.fill"
     let stopEditingIcon = "lock.open.fill"
+    let preferencesIcon = "gearshape"
     
     let formHeaderFont = Font.headline
     
