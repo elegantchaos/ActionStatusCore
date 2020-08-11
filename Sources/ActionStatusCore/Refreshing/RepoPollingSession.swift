@@ -42,13 +42,13 @@ public class RepoPollingSession: Octoid.Session {
     }
     
     public func scheduleEvents(for deadline: DispatchTime = DispatchTime.now()) {
-        networkingChannel.log("scheduling request for \(fullName)")
+        refreshChannel.log("scheduling request for \(fullName)")
         let resource = EventsResource(name: repo.name, owner: repo.owner)
         poll(target: resource, processors: eventsProcessor, for: deadline, repeatingEvery: 30.0)
     }
     
     public func scheduleWorkflow(for deadline: DispatchTime = DispatchTime.now()) {
-        networkingChannel.log("scheduling workflow request for \(fullName)")
+        refreshChannel.log("scheduling workflow request for \(fullName)")
         let resource = WorkflowResource(name: repo.name, owner: repo.owner, workflow: repo.workflow)
         poll(target: resource, processors: workflowProcessor, for: deadline, repeatingEvery: 30.0)
     }

@@ -38,30 +38,11 @@ struct EventsProcessor: Processor {
 }
 
 
-struct EventsUnchangedProcessor: ProcessorBase {
-    
-//    typealias SessionType = RepoPollingSession
-//    typealias Payload = Events
-
-    func decode(data: Data, with decoder: JSONDecoder) throws -> Decodable {
-        return ""
-    }
-    
-    func process(decoded: Decodable, response: HTTPURLResponse, for request: Request, in session: JSONSession.Session) -> RepeatStatus {
-        // if we got a 304 response, we don't need to decode anything
-        refreshChannel.log("\(request.resource) was unchanged.")
-        return .inherited
-    }
-
-    let name = "unchanged"
-    let codes = [304]
-}
-
 struct EventsProcessorGroup: ProcessorGroup {
     let name = "events"
     var processors: [ProcessorBase] = [
         EventsProcessor(),
-        EventsUnchangedProcessor(),
+        UnchangedProcessor(),
         MessageProcessor<RepoPollingSession>()
     ]
 }

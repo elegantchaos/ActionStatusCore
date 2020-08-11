@@ -6,9 +6,6 @@
 import Foundation
 import Octoid
 
-let user = "sam@elegantchaos.com"
-let server = "api.github.com"
-
 public class OctoidRefreshController: RefreshController {
     internal var sessions: [RepoPollingSession]
     internal let token: String

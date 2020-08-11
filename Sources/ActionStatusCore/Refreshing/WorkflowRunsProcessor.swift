@@ -29,3 +29,12 @@ struct WorkflowRunsProcessor: Processor {
         }
     }
 }
+
+struct WorkflowGroupProcessor: ProcessorGroup {
+    let name = "workflows"
+    var processors: [ProcessorBase] = [
+        WorkflowRunsProcessor(),
+        UnchangedProcessor(),
+        MessageProcessor<RepoPollingSession>()
+    ]
+}
