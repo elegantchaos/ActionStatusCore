@@ -20,8 +20,6 @@ public class Model: ObservableObject {
     internal let store: NSUbiquitousKeyValueStore
     internal let key: String = "State"
     internal var items: [UUID:Repo]
-
-    public var refreshInterval: Double = 10.0
     
     @Published public var itemIdentifiers: [UUID]
     @Published public var passing: Int = 0
@@ -29,7 +27,11 @@ public class Model: ObservableObject {
     @Published public var running: Int = 0
     @Published public var queued: Int = 0
     @Published public var unreachable: Int = 0
-    
+    @Published public var defaultOwner: String = ""
+    @Published public var defaultName = "New Repo"
+    @Published public var defaultWorkflow = "Tests"
+    @Published public var defaultBranches: [String] = []
+
     public var combinedState: Repo.State {
         let state: Repo.State
         if running > 0 {
@@ -84,6 +86,10 @@ public class Model: ObservableObject {
             items = loadedRepos
             sortItems()
         }
+        
+        if let key = store.string(forKey: .defaultOwnerKey) ?? UserDefaults.standard.string(forKey: .defaultOwnerKey) {
+            defaultOwner = key
+        }
     }
     
     public func save(toDefaultsKey key: String) {
@@ -106,6 +112,7 @@ public class Model: ObservableObject {
         }
         
         store.set(repoIDs, forKey: key)
+        store.set(defaultOwner, forKey: .defaultOwnerKey)
     }
     
     public func repo(withIdentifier id: UUID) -> Repo? {
@@ -135,8 +142,8 @@ public class Model: ObservableObject {
         }
     }
      
-    @discardableResult public func addRepo() -> Repo {
-        let repo = Repo()
+    @discardableResult public func addRepo(viewState: ViewState) -> Repo {
+        let repo = Repo(model: self)
         items[repo.id] = repo
         itemIdentifiers.append(repo.id)
 

@@ -15,10 +15,12 @@ public enum RefreshState {
 
 public class RefreshController {
     internal let model: Model
+    internal let viewState: ViewState
     internal var state: RefreshState = .paused(1)
 
-    public init(model: Model) {
+    public init(model: Model, viewState: ViewState) {
         self.model = model
+        self.viewState = viewState
     }
 
     internal func startRefresh() { fatalError("needs overriding") }

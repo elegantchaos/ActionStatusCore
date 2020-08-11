@@ -29,10 +29,10 @@ public struct EditView: View {
         return repo
     }
     
-    @State var name = Repo.defaultName
-    @State var owner = Repo.defaultOwner
-    @State var workflow = Repo.defaultWorkflow
-    @State var branches: String = Repo.defaultBranches.joined(separator: ", ")
+    @State var name = ""
+    @State var owner = ""
+    @State var workflow = ""
+    @State var branches: String = ""
     
     public init(repoID: UUID? = nil) {
         self.repoID = repoID
@@ -125,11 +125,11 @@ public struct EditView: View {
     }
     
     func openRepo() {
-        viewState.host.openGithub(with: update(repo: Repo()), at: .repo)
+        viewState.host.openGithub(with: update(repo: Repo(model: model)), at: .repo)
     }
     
     func openWorkflow() {
-        viewState.host.openGithub(with: update(repo: Repo()), at: .workflow)
+        viewState.host.openGithub(with: update(repo: Repo(model: model)), at: .workflow)
     }
 
     var trimmedWorkflow: String {
@@ -175,7 +175,7 @@ public struct EditView: View {
     }
     
     func save() {
-        let repo = self.repo ?? Repo()
+        let repo = self.repo ?? Repo(model: model)
         let updated = update(repo: repo)
         model.update(repo: updated)
     }

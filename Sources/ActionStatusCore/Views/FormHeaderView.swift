@@ -6,13 +6,14 @@
 import SwiftUI
 
 struct FormHeaderView: View {
+    typealias Action = () -> Void
     let cancelLabel: String
-    let cancelAction: () -> Void
+    let cancelAction: Action?
     let doneLabel: String
-    let doneAction: () -> Void
+    let doneAction: Action?
     let title: String
     
-    init(_ title: String, cancelLabel: String = "Cancel", cancelAction: @escaping () -> Void, doneLabel: String = "Done", doneAction: @escaping () -> Void) {
+    init(_ title: String, cancelLabel: String = "Cancel", cancelAction: Action? = nil, doneLabel: String = "Done", doneAction: Action? = nil) {
         self.title = title
         self.cancelLabel = cancelLabel
         self.cancelAction = cancelAction
@@ -23,8 +24,10 @@ struct FormHeaderView: View {
     var body: some View {
         HStack(alignment: .center) {
             HStack {
-                Button(action: cancelAction) { Text(cancelLabel) }
+                if cancelAction != nil {
+                Button(action: cancelAction!) { Text(cancelLabel) }
                     .accessibility(identifier: "cancel")
+                }
                 Spacer()
             }
             Text(title)
@@ -33,7 +36,7 @@ struct FormHeaderView: View {
                 .accessibility(identifier: "formHeader")
             HStack {
                 Spacer()
-                Button(action: doneAction) { Text(doneLabel) }
+                Button(action: doneAction!) { Text(doneLabel) }
                     .accessibility(identifier: "done")
             }
         }.padding([.leading, .trailing, .top], 20)

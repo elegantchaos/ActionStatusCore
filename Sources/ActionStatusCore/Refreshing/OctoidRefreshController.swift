@@ -10,10 +10,10 @@ public class OctoidRefreshController: RefreshController {
     internal var sessions: [RepoPollingSession]
     internal let token: String
     
-    public init(model: Model, token: String) {
+    public init(model: Model, viewState: ViewState, token: String) {
         self.sessions = []
         self.token = token
-        super.init(model: model)
+        super.init(model: model, viewState: viewState)
     }
 
     override func startRefresh() {

@@ -20,10 +20,6 @@ import DictionaryCoding
 }
 
 
-private extension String {
-    static let defaultOwnerKey = "DefaultOwner"
-}
-
 private extension URL {
     var bookmarkKey: String { "bookmark:\(absoluteURL.path)" }
 }
@@ -50,17 +46,12 @@ public struct Repo: Identifiable, Equatable, Hashable {
     public var lastFailed: Date?
     public var lastSucceeded: Date?
 
-    public static var defaultName: String { "New Repo" }
-    public static var defaultOwner: String { UserDefaults.standard.string(forKey: .defaultOwnerKey) ?? "" }
-    public static var defaultWorkflow: String { "Tests" }
-    public static var defaultBranches: [String] { [] }
-
-    public init() {
+    public init(model: Model) {
         id = UUID()
-        name = Self.defaultName
-        owner = Self.defaultOwner
-        workflow = Self.defaultWorkflow
-        branches = Self.defaultBranches
+        name = model.defaultName
+        owner = model.defaultOwner
+        workflow = model.defaultWorkflow
+        branches = model.defaultBranches
         state = .unknown
         settings = WorkflowSettings()
         paths = [:]

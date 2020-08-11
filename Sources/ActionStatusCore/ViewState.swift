@@ -10,30 +10,19 @@ struct PreviewHost: ApplicationHost {
     let info = BundleInfo(for: Bundle.main)
 }
 
+public extension String {
+    static let defaultOwnerKey = "DefaultOwner"
+    static let refreshIntervalKey = "RefreshInterval"
+    static let displaySizeKey = "TextSize"
+}
+
 public class ViewState: ObservableObject {
-    public enum TextSize: Int {
-        case automatic = 0
-        case small = 1
-        case medium = 2
-        case large = 3
-        case huge = 4
-        
-        var font: Font {
-            switch self {
-                case .automatic, .large: return .title
-                case .huge: return .largeTitle
-                case .medium: return .headline
-                case .small: return .body
-            }
-        }
-        
-        var rowHeight: CGFloat { return 0 }
-    }
-    
+
     @Published public var isEditing: Bool = false
     @Published public var selectedID: UUID? = nil
-    @Published public var repoTextSize: TextSize = .automatic
-
+    @Published public var repoTextSize: DisplaySize = .automatic
+    @Published public var refreshRate: RefreshRate = .automatic
+    
     public let host: ApplicationHost
     public let padding: CGFloat = 10
     let editIcon = "info.circle"
@@ -48,7 +37,7 @@ public class ViewState: ObservableObject {
     }
     
     @discardableResult func addRepo(to model: Model) -> Repo {
-        let newRepo = model.addRepo()
+        let newRepo = model.addRepo(viewState: self)
         host.saveState()
         selectedID = newRepo.id
         return newRepo
