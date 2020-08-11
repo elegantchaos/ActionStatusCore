@@ -29,25 +29,6 @@ private extension URL {
 }
 
 public struct Repo: Identifiable, Equatable, Hashable {
-    public static func == (lhs: Repo, rhs: Repo) -> Bool {
-        return lhs.id == rhs.id
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        id.hash(into: &hasher)
-    }
-    
-    static var dictionaryDecoder: DictionaryDecoder {
-        let decoder = DictionaryDecoder()
-        let defaults: [String:Any] = [
-            String(describing: LocalPathDictionary.self): LocalPathDictionary()
-        ]
-        decoder.missingValueDecodingStrategy = .useDefault(defaults: defaults)
-        return decoder
-            
-
-    }
-    
     public enum State: UInt, Codable {
         case unknown = 0
         case passing = 1
@@ -68,7 +49,7 @@ public struct Repo: Identifiable, Equatable, Hashable {
     public var paths: LocalPathDictionary
     public var lastFailed: Date?
     public var lastSucceeded: Date?
-    
+
     public static var defaultName: String { "New Repo" }
     public static var defaultOwner: String { UserDefaults.standard.string(forKey: .defaultOwnerKey) ?? "" }
     public static var defaultWorkflow: String { "Tests" }
@@ -96,6 +77,39 @@ public struct Repo: Identifiable, Equatable, Hashable {
         self.paths = [:]
     }
     
+    public static func == (lhs: Repo, rhs: Repo) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        id.hash(into: &hasher)
+    }
+    
+    public func identical(to other: Repo) -> Bool {
+        return id == other.id
+            && name == other.name
+            && owner == other.owner
+            && workflow == other.workflow
+            && branches == other.branches
+            && state == other.state
+            && settings == other.settings
+            && paths == other.paths
+            && lastFailed == other.lastFailed
+            && lastSucceeded == other.lastSucceeded
+    }
+
+    static var dictionaryDecoder: DictionaryDecoder {
+        let decoder = DictionaryDecoder()
+        let defaults: [String:Any] = [
+            String(describing: LocalPathDictionary.self): LocalPathDictionary()
+        ]
+        decoder.missingValueDecodingStrategy = .useDefault(defaults: defaults)
+        return decoder
+            
+
+    }
+    
+
     mutating public func remember(url: URL, forDevice device: String) {
         paths[device] = url.absoluteURL.path
         storeBookmark(for: url)

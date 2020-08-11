@@ -114,7 +114,12 @@ public class Model: ObservableObject {
     
     public func update(repo: Repo, addIfMissing: Bool = true) {
         let item = items[repo.id]
-        let update = item == nil ? addIfMissing : true
+        let update: Bool
+        if let existing = item, !repo.identical(to: existing) {
+            update = true
+        } else {
+            update = (item == nil) && addIfMissing
+        }
         
         if update {
             modelChannel.log(items[repo.id] == nil ? "Added \(repo)" : "Updated \(repo)")
