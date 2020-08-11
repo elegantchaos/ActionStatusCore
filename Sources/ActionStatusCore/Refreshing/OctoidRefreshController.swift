@@ -22,12 +22,14 @@ public class OctoidRefreshController: RefreshController {
     override func startRefresh() {
         var sessions: [RepoPollingSession] = []
         let filter: String? = nil
+        var deadline = DispatchTime.now()
         for repo in model.items.values {
             if filter == nil || filter == repo.name {
                 let session = RepoPollingSession(controller: self, repo: repo, token: token)
-                session.scheduleEvents()
-                session.scheduleWorkflow()
+                session.scheduleEvents(for: deadline)
+                session.scheduleWorkflow(for: deadline)
                 sessions.append(session)
+                deadline = deadline.advanced(by: .seconds(1))
             }
         }
         self.sessions = sessions
@@ -41,7 +43,7 @@ public class OctoidRefreshController: RefreshController {
     }
     
     func update(repo: Repo, message: Message) {
-        print("Error for \(repo.name) was: \(message.message)")
+        refreshChannel.log("Error for \(repo.name) was: \(message.message)")
         var updated = repo
         updated.state = .unknown
         DispatchQueue.main.async {
@@ -51,7 +53,7 @@ public class OctoidRefreshController: RefreshController {
     }
     
     func update(repo: Repo, with run: WorkflowRun) {
-        modelChannel.log("\(repo.name) status: \(run.status), conclusion: \(run.conclusion ?? "")")
+        refreshChannel.log("\(repo.name) status: \(run.status), conclusion: \(run.conclusion ?? "")")
         var updated = repo
         switch run.status {
             case "queued":
