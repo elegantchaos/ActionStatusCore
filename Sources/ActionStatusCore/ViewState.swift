@@ -24,6 +24,8 @@ public class ViewState: ObservableObject {
     @Published public var selectedID: UUID? = nil
     @Published public var displaySize: DisplaySize = .automatic
     @Published public var refreshRate: RefreshRate = .automatic
+    @Published public var githubUser: String = ""
+    @Published public var githubServer: String = "api.github.com"
     
     public let host: ApplicationHost
     public let padding: CGFloat = 10
