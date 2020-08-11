@@ -8,6 +8,7 @@ import SwiftUI
 
 struct PreviewHost: ApplicationHost {
     let info = BundleInfo(for: Bundle.main)
+    var refreshController: RefreshController? { return nil }
 }
 
 public extension String {
@@ -16,6 +17,8 @@ public extension String {
     static let displaySizeKey = "TextSize"
     static let showInMenuKey = "ShowInMenu"
     static let showInDockKey = "ShowInDock"
+    static let githubUserKey = "GithubUser"
+    static let githubServerKey = "GithubServer"
 }
 
 public class ViewState: ObservableObject {

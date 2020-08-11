@@ -117,7 +117,7 @@ public struct EditView: View {
             }
         }
         .onAppear() {
-            viewState.host.pauseRefresh()
+            viewState.host.refreshController?.pause()
             self.load()
         }
         .alignLabels(width: $labelWidth)
@@ -156,7 +156,7 @@ public struct EditView: View {
     }
     
     func dismiss() {
-        viewState.host.resumeRefresh()
+        viewState.host.refreshController?.resume()
         presentation.wrappedValue.dismiss()
     }
     

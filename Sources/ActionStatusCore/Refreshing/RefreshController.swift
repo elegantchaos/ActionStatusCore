@@ -6,7 +6,7 @@
 import Foundation
 import Logger
 
-let refreshChannel = Channel("com.elegantchaos.actionstatus.Refresh")
+public let refreshChannel = Channel("com.elegantchaos.actionstatus.Refresh")
 
 public enum RefreshState {
     case running
