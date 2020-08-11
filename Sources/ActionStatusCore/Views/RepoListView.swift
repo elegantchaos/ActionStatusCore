@@ -21,7 +21,7 @@ public struct RepoListView: View {
             }
             .onDelete(perform: delete)
         }
-        .environment(\.defaultMinListRowHeight, viewState.repoTextSize.rowHeight)
+        .environment(\.defaultMinListRowHeight, viewState.displaySize.rowHeight)
         .bindEditing(to: $viewState.isEditing)
     }
     
@@ -53,7 +53,7 @@ public struct RepoListView: View {
                 EditButton(repoID: repoID)
             }
         }
-        .font(viewState.repoTextSize.font)
+        .font(viewState.displaySize.font)
         .shim.contextMenu() { makeContentMenu(for: repo) }
         .shim.onTapGesture() { if selectable { self.edit(repoID: repoID) } }
         

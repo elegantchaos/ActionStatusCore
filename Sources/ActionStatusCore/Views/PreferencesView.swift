@@ -10,9 +10,14 @@ import SwiftUIExtensions
 public struct PreferencesView: View {
     @Environment(\.presentationMode) var presentation
     @EnvironmentObject var viewState: ViewState
-    
+    @EnvironmentObject var model: Model
     @State private var labelWidth: CGFloat = 0
+
     @State var defaultOwner: String = ""
+    @State var refreshRate: RefreshRate = .automatic
+    @State var displaySize: DisplaySize = .automatic
+    @State var showInMenu = true
+    @State var showInDock = true
     
     public init() {
     }
@@ -24,14 +29,14 @@ public struct PreferencesView: View {
             NavigationView {
                 Form() {
                     HStack {
-                        Label("default owner", width: $labelWidth)
+                        Label("Default Owner", width: $labelWidth)
                         TextField("owner", text: $defaultOwner)
                         .autocapitalization(.none)
                     }
                     
                     HStack {
-                        Label("refresh rate", width: $labelWidth)
-                        Picker(viewState.refreshRate.label, selection: $viewState.refreshRate) {
+                        Label("Refresh Every", width: $labelWidth)
+                        Picker(refreshRate.label, selection: $refreshRate) {
                             ForEach(RefreshRate.allCases, id: \.self) { rate in
                                 Text(rate.label)
                             }
@@ -40,14 +45,25 @@ public struct PreferencesView: View {
                     }
                     
                     HStack {
-                        Label("label size", width: $labelWidth)
-                        Picker(viewState.repoTextSize.label, selection: $viewState.repoTextSize) {
+                        Label("Display Size", width: $labelWidth)
+                        Picker(displaySize.label, selection: $displaySize) {
                             ForEach(DisplaySize.allCases, id: \.self) { size in
                                 Text(size.label)
                             }
                         }
                         .setPickerStyle()
                     }
+                    
+                    HStack {
+                        Label("Show In Menubar", width: $labelWidth)
+                        Toggle("", isOn: $showInMenu)
+                    }
+                    
+                    HStack {
+                        Label("Show In Dock", width: $labelWidth)
+                        Toggle("", isOn: $showInDock)
+                    }
+
                 }
             }.padding()
         }
@@ -58,8 +74,11 @@ public struct PreferencesView: View {
         
     
     func handleAppear() {
-        let defaults = UserDefaults.standard
-        defaultOwner = defaults.string(forKey: .defaultOwnerKey) ?? ""
+        defaultOwner = model.defaultOwner
+        refreshRate = viewState.refreshRate
+        displaySize = viewState.displaySize
+        showInDock = UserDefaults.standard.bool(forKey: .showInDockKey)
+        showInMenu = UserDefaults.standard.bool(forKey: .showInMenuKey)
     }
     
     func handleCancel() {
@@ -67,8 +86,11 @@ public struct PreferencesView: View {
     }
 
     func handleSave() {
-        let defaults = UserDefaults.standard
-        defaults.set(defaultOwner, forKey: .defaultOwnerKey)
+        model.defaultOwner = defaultOwner
+        viewState.refreshRate = refreshRate
+        viewState.displaySize = displaySize
+        UserDefaults.standard.set(showInDock, forKey: .showInDockKey)
+        UserDefaults.standard.set(showInMenu, forKey: .showInMenuKey)
         
         presentation.wrappedValue.dismiss()
     }

@@ -14,13 +14,15 @@ public extension String {
     static let defaultOwnerKey = "DefaultOwner"
     static let refreshIntervalKey = "RefreshInterval"
     static let displaySizeKey = "TextSize"
+    static let showInMenuKey = "ShowInMenu"
+    static let showInDockKey = "ShowInDock"
 }
 
 public class ViewState: ObservableObject {
 
     @Published public var isEditing: Bool = false
     @Published public var selectedID: UUID? = nil
-    @Published public var repoTextSize: DisplaySize = .automatic
+    @Published public var displaySize: DisplaySize = .automatic
     @Published public var refreshRate: RefreshRate = .automatic
     
     public let host: ApplicationHost
