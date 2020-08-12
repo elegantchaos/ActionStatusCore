@@ -4,6 +4,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import SwiftUI
+import SwiftUIExtensions
 
 public enum DisplaySize: Int, CaseIterable {
     case automatic = 0
@@ -22,11 +23,15 @@ public enum DisplaySize: Int, CaseIterable {
         }
     }
     
+    var rowHeight: CGFloat { return 0 }
+
     var normalised: DisplaySize {
         return self == .automatic ? .large : self
     }
-    
-    var label: String {
+}
+
+extension DisplaySize: Labelled {
+    public var label: String {
         switch self {
             case .automatic: return "Default (\(normalised.label))"
             case .large: return "Large"
@@ -35,7 +40,5 @@ public enum DisplaySize: Int, CaseIterable {
             case .small: return "Small"
         }
     }
-    
-    var rowHeight: CGFloat { return 0 }
 }
 

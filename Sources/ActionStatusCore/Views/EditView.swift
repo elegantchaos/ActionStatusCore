@@ -17,8 +17,6 @@ public struct EditView: View {
 
     let repoID: UUID?
     
-    @State private var labelWidth: CGFloat = 0
-
     @Environment(\.presentationMode) var presentation
     @EnvironmentObject var model: Model
     @EnvironmentObject var viewState: ViewState
@@ -42,6 +40,7 @@ public struct EditView: View {
         let localPath = repo?.url(forDevice: Device.main.identifier)?.path ?? ""
         
         return VStack() {
+            AlignedLabelContainer {
             FormHeaderView(title, cancelAction: dismiss, doneAction: done)
 
             Form {
@@ -52,7 +51,7 @@ public struct EditView: View {
                     footer: Text("Enter the name and owner of the repository, and the name of the workflow file to test. Enter a list of specific branches to test, or leave blank to just test the default branch.")
                 ) {
                     HStack {
-                        Label("name", width: $labelWidth)
+                        AlignedLabel("name")
                         TextField("github repo name", text: $name)
                             .nameOrgStyle()
                             .modifier(ClearButton(text: $name))
@@ -62,21 +61,21 @@ public struct EditView: View {
                     }
                     
                     HStack {
-                        Label("owner", width: $labelWidth)
+                        AlignedLabel("owner")
                         TextField("github user or organisation", text: $owner)
                             .nameOrgStyle()
                             .modifier(ClearButton(text: $owner))
                     }
                     
                     HStack {
-                        Label("workflow", width: $labelWidth)
+                        AlignedLabel("workflow")
                         TextField("Tests.yml", text: $workflow)
                             .nameOrgStyle()
                             .modifier(ClearButton(text: $workflow))
                     }
                     
                     HStack {
-                        Label("branches", width: $labelWidth)
+                        AlignedLabel("branches")
                         TextField("branch1, branch2, …", text: $branches)
                             .branchListStyle()
                             .modifier(ClearButton(text: $branches))
@@ -89,7 +88,7 @@ public struct EditView: View {
                     footer: Text("Corresponding locations on Github.")
                 ) {
                     HStack(alignment: .firstTextBaseline) {
-                        Label("repo", width: $labelWidth)
+                        AlignedLabel("repo")
                         Text("https://github.com/\(trimmedOwner)/\(trimmedName)").bold()
                         Spacer()
                         Button(action: openRepo) {
@@ -98,7 +97,7 @@ public struct EditView: View {
                     }
                     
                     HStack(alignment: .firstTextBaseline) {
-                        Label("status", width: $labelWidth)
+                        AlignedLabel("status")
                         Text("https://github.com/\(trimmedOwner)/\(trimmedName)/actions?query=workflow%3A\(trimmedWorkflow)").bold()
                         Spacer()
                         Button(action: openWorkflow) {
@@ -108,7 +107,7 @@ public struct EditView: View {
 
                     if !localPath.isEmpty {
                         HStack(alignment: .firstTextBaseline) {
-                            Label("local", width: $labelWidth)
+                            AlignedLabel("local")
                             Text(localPath)
                         }
                     }
@@ -120,7 +119,7 @@ public struct EditView: View {
             viewState.host.refreshController?.pause()
             self.load()
         }
-        .alignLabels(width: $labelWidth)
+    }
         
     }
     
