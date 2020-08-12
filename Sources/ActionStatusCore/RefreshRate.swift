@@ -19,14 +19,16 @@ public enum RefreshRate: Int, CaseIterable {
         var rate: TimeInterval {
             return TimeInterval(self.normalised.rawValue)
         }
-        
-        var label: String {
-            if self == .automatic {
-                return "Default (\(normalised.label))"
-            } else if rawValue < 60 {
-                return "\(rawValue) seconds"
-            } else {
-                return "\(rawValue / 60) minutes"
-            }
+    }
+
+extension RefreshRate: Labelled {
+    public var label: String {
+        if self == .automatic {
+            return "Default (\(normalised.label))"
+        } else if rawValue < 60 {
+            return "\(rawValue) seconds"
+        } else {
+            return "\(rawValue / 60) minutes"
         }
     }
+}
