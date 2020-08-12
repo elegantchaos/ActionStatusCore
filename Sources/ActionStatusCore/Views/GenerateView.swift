@@ -31,8 +31,7 @@ struct GenerateView: View {
                 .font(.caption)
                 .padding(.top, viewState.padding)
 
-            Form() {
-                
+            Form {
                 togglesSection(title: "Platforms", options: self.generator.platforms, toggles: $platforms)
                 togglesSection(title: "Swift", options: self.generator.compilers, toggles: $compilers)
                 togglesSection(title: "Configuration", options: self.generator.configurations, toggles: $configurations)
@@ -89,7 +88,7 @@ struct GenerateView: View {
         let allSet = toggles.wrappedValue.filter({ $0 }).count == count
         return Section(header:
             HStack {
-                Text(title).font(viewState.formHeaderFont)
+                Text(title).font(viewState.formStyle.headerFont)
                 Spacer()
                 Button(action: {
                     for n in 0 ..< toggles.wrappedValue.count {

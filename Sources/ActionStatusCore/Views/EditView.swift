@@ -38,89 +38,62 @@ public struct EditView: View {
     
     public var body: some View {
         let localPath = repo?.url(forDevice: Device.main.identifier)?.path ?? ""
+        let detailStyle = NameOrgStyle()
         
         return VStack() {
             AlignedLabelContainer {
-            FormHeaderView(title, cancelAction: dismiss, doneAction: done)
-
-            Form {
-                EmptyView()
+                FormHeaderView(title, cancelAction: dismiss, doneAction: done)
                 
-                Section(
-                    header: Text("Details").font(viewState.formHeaderFont),
-                    footer: Text("Enter the name and owner of the repository, and the name of the workflow file to test. Enter a list of specific branches to test, or leave blank to just test the default branch.")
-                ) {
-                    HStack {
-                        AlignedLabel("name")
-                        TextField("github repo name", text: $name)
-                            .nameOrgStyle()
-                            .modifier(ClearButton(text: $name))
-                        //                        .introspectTextField { textField in
-                        //                            textField.becomeFirstResponder()
-                        //                        }
+                Form {
+                    FormSection(
+                        header: "Details",
+                        footer: "Enter the name and owner of the repository, and the name of the workflow file to test. Enter a list of specific branches to test, or leave blank to just test the default branch."
+                    ) {
+                        FormFieldRow(label: "name", placeholder: "github repo name", variable: $name, style: detailStyle, clearButton: true)
+                        FormFieldRow(label: "owner", placeholder: "github user or organisation", variable: $owner, style: detailStyle, clearButton: true)
+                        FormFieldRow(label: "workflow", placeholder: "Tests.yml", variable: $workflow, style: detailStyle, clearButton: true)
+                        FormFieldRow(label: "branches", placeholder: "branch1, branch2, …", variable: $branches, style: BranchListStyle(), clearButton: true)
                     }
                     
-                    HStack {
-                        AlignedLabel("owner")
-                        TextField("github user or organisation", text: $owner)
-                            .nameOrgStyle()
-                            .modifier(ClearButton(text: $owner))
-                    }
-                    
-                    HStack {
-                        AlignedLabel("workflow")
-                        TextField("Tests.yml", text: $workflow)
-                            .nameOrgStyle()
-                            .modifier(ClearButton(text: $workflow))
-                    }
-                    
-                    HStack {
-                        AlignedLabel("branches")
-                        TextField("branch1, branch2, …", text: $branches)
-                            .branchListStyle()
-                            .modifier(ClearButton(text: $branches))
-                    }
-                    
-                }.padding([.bottom])
-                
-                Section(
-                    header: Text("Locations").font(viewState.formHeaderFont),
-                    footer: Text("Corresponding locations on Github.")
-                ) {
-                    HStack(alignment: .firstTextBaseline) {
-                        AlignedLabel("repo")
-                        Text("https://github.com/\(trimmedOwner)/\(trimmedName)").bold()
-                        Spacer()
-                        Button(action: openRepo) {
-                            SystemImage("arrowshape.turn.up.right.circle")
+                    FormSection(
+                        header: "Locations",
+                        footer: "Corresponding locations on Github."
+                    ) {
+                        FormRow(label: "repo") {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text("https://github.com/\(trimmedOwner)/\(trimmedName)").bold()
+                                Spacer()
+                                Button(action: openRepo) {
+                                    SystemImage("arrowshape.turn.up.right.circle")
+                                }
+                            }
+                        }
+                        
+                        FormRow(label: "status") {
+                            HStack(alignment: .firstTextBaseline) {
+                            Text("https://github.com/\(trimmedOwner)/\(trimmedName)/actions?query=workflow%3A\(trimmedWorkflow)").bold()
+                            Spacer()
+                            Button(action: openWorkflow) {
+                                SystemImage("arrowshape.turn.up.right.circle")
+                            }
+                            }
+                        }
+                        
+                        if !localPath.isEmpty {
+                            FormRow(label: "local") {
+                                Text(localPath)
+                            }
                         }
                     }
-                    
-                    HStack(alignment: .firstTextBaseline) {
-                        AlignedLabel("status")
-                        Text("https://github.com/\(trimmedOwner)/\(trimmedName)/actions?query=workflow%3A\(trimmedWorkflow)").bold()
-                        Spacer()
-                        Button(action: openWorkflow) {
-                            SystemImage("arrowshape.turn.up.right.circle")
-                        }
-                    }
-
-                    if !localPath.isEmpty {
-                        HStack(alignment: .firstTextBaseline) {
-                            AlignedLabel("local")
-                            Text(localPath)
-                        }
-                    }
-
                 }
             }
+            .padding()
+            .environmentObject(viewState.formStyle)
+            .onAppear() {
+                viewState.host.refreshController?.pause()
+                self.load()
+            }
         }
-        .onAppear() {
-            viewState.host.refreshController?.pause()
-            self.load()
-        }
-    }
-        
     }
     
     func openRepo() {
@@ -198,21 +171,23 @@ struct RepoEditView_Previews: PreviewProvider {
     }
 }
 
-extension View {
-    func nameOrgStyle() -> some View {
-
-        return textFieldStyle(EditView.fieldStyle)
+struct NameOrgStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
             .keyboardType(.namePhonePad)
             .shim.textContentType(.name)
             .disableAutocorrection(true)
             .autocapitalization(.none)
+            .modifier(DefaultFormFieldStyle())
     }
+}
 
-    func branchListStyle() -> some View {
-        return textFieldStyle(EditView.fieldStyle)
+struct BranchListStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
             .keyboardType(.alphabet)
             .disableAutocorrection(true)
             .autocapitalization(.none)
+            .modifier(DefaultFormFieldStyle())
     }
-
 }

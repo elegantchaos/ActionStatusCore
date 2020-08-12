@@ -5,6 +5,7 @@
 
 import Bundles
 import SwiftUI
+import SwiftUIExtensions
 
 struct PreviewHost: ApplicationHost {
     let info = BundleInfo(for: Bundle.main)
@@ -37,7 +38,11 @@ public class ViewState: ObservableObject {
     let stopEditingIcon = "lock.open.fill"
     let preferencesIcon = "gearshape"
     
-    let formHeaderFont = Font.headline
+    let formStyle = FormStyle(
+        headerFont: .headline,
+        footerFont: Font.body.italic(),
+        contentFont: Font.body.bold()
+    )
     
     public init(host: ApplicationHost) {
         self.host = host

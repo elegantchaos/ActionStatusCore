@@ -25,60 +25,45 @@ public struct PreferencesView: View {
     }
     
     public var body: some View {
-        AlignedLabelContainer {
+        let rowStyle = ClearFormRowStyle()
+        
+        return AlignedLabelContainer {
         VStack {
             FormHeaderView("Preferences", cancelAction: handleCancel, doneAction: handleSave)
             
-                Form() {
-                    FormSection(
-                        header: "Connection",
-                        footer: "Leave the github information blank to fall back on basic status checking (which works for public repos only).",
-                        font: viewState.formHeaderFont
-                    ) {
-                        
-                        FormPickerRow(label: "Refresh Every", variable: $refreshRate, cases: RefreshRate.allCases)
-                        FormFieldRow(label: "Github User", variable: $githubUser, contentType: .username)
-                        FormFieldRow(label: "Github Server", variable: $githubServer, contentType: .URL)
-                        FormFieldRow(label: "Github Tokeb", variable: $githubToken, contentType: .password)
-                    }
+            Form {
+                FormSection(
+                    header: "Connection",
+                    footer: "Leave the github information blank to fall back on basic status checking (which works for public repos only)."
+                ) {
                     
-                    FormSection(
-                        header: "Display",
-                        footer: "Display settings.",
-                        font: viewState.formHeaderFont
-                    ) {
-                        
-                        FormPickerRow(label: "Item Size", variable: $displaySize, cases: DisplaySize.allCases)
-                        
-                        HStack {
-                            AlignedLabel("Show In Menubar")
-                            Toggle("", isOn: $showInMenu)
-                        }
-                        
-                        HStack {
-                            AlignedLabel("Show In Dock")
-                            Toggle("", isOn: $showInDock)
-                        }
-                    }
-                    
-                    Section(
-                        header: Text("Creation").font(viewState.formHeaderFont),
-                        footer: Text("Defaults to use for new repos.")
-                    ) {
-                        HStack {
-                            AlignedLabel("Default Owner")
-                            TextField("owner", text: $defaultOwner)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                        }
-                    }
-                    
-                    
-                    
+                    FormPickerRow(label: "Refresh Every", variable: $refreshRate, cases: RefreshRate.allCases, style: rowStyle)
+                    FormFieldRow(label: "Github User", variable: $githubUser, style: DefaultFormFieldStyle(contentType: .username, clearButton: true))
+                    FormFieldRow(label: "Github Server", variable: $githubServer, style: DefaultFormFieldStyle(contentType: .URL, clearButton: true))
+                    FormFieldRow(label: "Github Token Long Long", variable: $githubToken, style: DefaultFormFieldStyle(contentType: .password, clearButton: true))
+                }
+                
+                FormSection(
+                    header: "Display",
+                    footer: "Display settings."
+                ) {
+                    FormPickerRow(label: "Item Size", variable: $displaySize, cases: DisplaySize.allCases, style: rowStyle)
+                    FormToggleRow(label: "Show In Menubar", variable: $showInMenu, style: rowStyle)
+                    FormToggleRow(label: "Show In Dock", variable: $showInDock, style: rowStyle)
+                }
+                
+                FormSection(
+                    header: "Creation",
+                    footer: "Defaults to use for new repos."
+                ) {
+                    FormFieldRow(label: "Default Owner", variable: $defaultOwner, style: DefaultFormFieldStyle(contentType: .organizationName))
+                }
             }
+            .padding()
         }
         .padding()
         .onAppear(perform: handleAppear)
+        .environmentObject(viewState.formStyle)
         }
     }
     
