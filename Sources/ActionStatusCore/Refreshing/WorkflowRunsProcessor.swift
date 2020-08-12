@@ -11,7 +11,7 @@ struct WorkflowRunsProcessor: Processor {
     typealias SessionType = RepoPollingSession
     typealias Payload = WorkflowRuns
     
-    let codes = [200, 304]
+    let codes = [200]
     let name = "workflows"
     
     var processors: [ProcessorBase] {

@@ -11,9 +11,9 @@ import JSONSession
 
 
 public class RepoPollingSession: Octoid.Session {
-    let repo: Repo // TODO: add a SessionSession (need a better name) to Session and pass that to Processors instead of the Session
-    let workflowProcessor = WorkflowRunsProcessor()
-    let eventsProcessor = EventsProcessorGroup()
+    let repo: Repo
+    let workflowProcessor = WorkflowGroupProcessor()
+    let eventsProcessor = EventsGroupProcessor()
     let refreshController: OctoidRefreshController
     var lastEvent: Date
     

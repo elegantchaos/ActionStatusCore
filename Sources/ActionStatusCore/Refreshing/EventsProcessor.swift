@@ -38,7 +38,7 @@ struct EventsProcessor: Processor {
 }
 
 
-struct EventsProcessorGroup: ProcessorGroup {
+struct EventsGroupProcessor: ProcessorGroup {
     let name = "events"
     var processors: [ProcessorBase] = [
         EventsProcessor(),
