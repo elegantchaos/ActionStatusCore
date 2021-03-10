@@ -18,7 +18,8 @@ let package = Package(
         .package(url: "https://github.com/elegantchaos/DictionaryCoding.git", from: "1.0.9"),
         .package(url: "https://github.com/elegantchaos/Logger.git", from: "1.5.5"),
         .package(url: "https://github.com/elegantchaos/Hardware.git", from: "1.0.1"),
-        .package(url: "https://github.com/elegantchaos/SwiftUIExtensions.git", from: "1.1.0"),
+        .package(url: "https://github.com/elegantchaos/SheetController.git", from: "1.0.2"),
+        .package(url: "https://github.com/elegantchaos/SwiftUIExtensions.git", from: "1.3.0"),
     ],
     targets: [
         .target(
@@ -29,6 +30,7 @@ let package = Package(
                 "DictionaryCoding",
                 "Hardware",
                 "Logger",
+                "SheetController",
                 "SwiftUIExtensions"
             ]),
         .testTarget(
