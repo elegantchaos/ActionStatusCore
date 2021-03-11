@@ -1,11 +1,11 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.3
 
 import PackageDescription
 
 let package = Package(
     name: "ActionStatusCore",
     platforms: [
-        .macOS(.v10_15), .iOS(.v13), .tvOS(.v13)
+        .macOS(.v11), .iOS(.v13), .tvOS(.v13)
     ],
     products: [
         .library(
@@ -18,12 +18,10 @@ let package = Package(
         .package(url: "https://github.com/elegantchaos/Bundles.git", from: "1.0.8"),
         .package(url: "https://github.com/elegantchaos/CollectionExtensions.git", from: "1.1.2"),
         .package(url: "https://github.com/elegantchaos/DictionaryCoding.git", from: "1.0.9"),
-        .package(url: "https://github.com/elegantchaos/Displays.git", from: "1.1.0"),
-        .package(url: "https://github.com/elegantchaos/Files.git", from: "1.1.3"),
         .package(url: "https://github.com/elegantchaos/Hardware.git", from: "1.0.1"),
         .package(url: "https://github.com/elegantchaos/Keychain.git", from: "0.0.1"),
         .package(url: "https://github.com/elegantchaos/Logger.git", from: "1.5.5"),
-        .package(url: "https://github.com/elegantchaos/Octoid.git", from: "1.0.2"),
+        .package(url: "https://github.com/elegantchaos/Octoid.git", from: "1.0.4"),
         .package(url: "https://github.com/elegantchaos/SheetController.git", from: "1.0.2"),
         .package(url: "https://github.com/elegantchaos/SwiftUIExtensions.git", from: "1.3.0"),
     ],
@@ -37,7 +35,9 @@ let package = Package(
                 "CollectionExtensions",
                 "DictionaryCoding",
                 "Hardware",
+                "Keychain",
                 "Logger",
+                "Octoid",
                 "SheetController",
                 "SwiftUIExtensions"
             ]),

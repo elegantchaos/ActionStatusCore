@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "ApplicationExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/ApplicationExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "f858e00faa4a80c88d7fe3d154cd57f7dc6609de",
+          "version": "2.1.2"
+        }
+      },
+      {
         "package": "BindingsExtensions",
         "repositoryURL": "https://github.com/elegantchaos/BindingsExtensions.git",
         "state": {
@@ -15,8 +24,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Bundles.git",
         "state": {
           "branch": null,
-          "revision": "4abb622ec7d6dcfdcf057bccf3a1414809829693",
-          "version": "1.0.6"
+          "revision": "18a0b17452f464323206b540dadad3d9aa91f167",
+          "version": "1.0.8"
         }
       },
       {
@@ -24,8 +33,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Coercion.git",
         "state": {
           "branch": null,
-          "revision": "6872c101780abbe62bfe6e2498a2a3b14813ccd6",
-          "version": "1.0.3"
+          "revision": "b459678c9455627a217d45a0c81081f3886bc965",
+          "version": "1.0.4"
         }
       },
       {
@@ -33,8 +42,8 @@
         "repositoryURL": "https://github.com/elegantchaos/CollectionExtensions.git",
         "state": {
           "branch": null,
-          "revision": "c91aac2e3652834ee7b63c371242607fb4663d59",
-          "version": "1.1.0"
+          "revision": "d03df03b3f61a3db72793088325321351d4c07bf",
+          "version": "1.1.2"
         }
       },
       {
@@ -60,8 +69,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Files.git",
         "state": {
           "branch": null,
-          "revision": "0fc27ae20624324f3a44733412fad9649d588fed",
-          "version": "1.1.3"
+          "revision": "a86af44d44917e05facab8abb15a482383bd8f12",
+          "version": "1.2.0"
         }
       },
       {
@@ -78,8 +87,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Images.git",
         "state": {
           "branch": null,
-          "revision": "59a9088a3f83e4e074df55e6d74b38cf52ffe75d",
-          "version": "1.0.0"
+          "revision": "a0fd1a3de2c3fec93ba86ebd642e4a2d9dfdef22",
+          "version": "1.1.2"
         }
       },
       {
@@ -92,12 +101,21 @@
         }
       },
       {
+        "package": "Keychain",
+        "repositoryURL": "https://github.com/elegantchaos/Keychain.git",
+        "state": {
+          "branch": null,
+          "revision": "96b170eca8df078f913c517c2bb732629f088fd9",
+          "version": "0.0.1"
+        }
+      },
+      {
         "package": "Logger",
         "repositoryURL": "https://github.com/elegantchaos/Logger.git",
         "state": {
           "branch": null,
-          "revision": "e8a0dea5e826a6b3f7d020bd113247274991fb97",
-          "version": "1.5.5"
+          "revision": "8ceabf0985b5255f7be42e023a3f63a7779a9145",
+          "version": "1.6.0"
         }
       },
       {
@@ -105,8 +123,8 @@
         "repositoryURL": "https://github.com/elegantchaos/Octoid.git",
         "state": {
           "branch": null,
-          "revision": "278eebf1a5f599c213683f864153fea12738e832",
-          "version": "1.0.2"
+          "revision": "0bb56bbc022ba2c193b4f634abc869ae83838487",
+          "version": "1.0.4"
         }
       },
       {
@@ -119,21 +137,39 @@
         }
       },
       {
+        "package": "SheetController",
+        "repositoryURL": "https://github.com/elegantchaos/SheetController.git",
+        "state": {
+          "branch": null,
+          "revision": "93fde2600bd0764388154c2bee23770c1b351362",
+          "version": "1.0.2"
+        }
+      },
+      {
         "package": "SwiftUIExtensions",
         "repositoryURL": "https://github.com/elegantchaos/SwiftUIExtensions.git",
         "state": {
           "branch": null,
-          "revision": "f573e87a9e7a6490b9d1fb2978b397e3d23207bf",
-          "version": "1.1.1"
+          "revision": "e1cee79c9c7de1edb7c196f8ff3b5b68ee6c6b27",
+          "version": "1.3.2"
+        }
+      },
+      {
+        "package": "ThreadExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/ThreadExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "53e17a23bae8af73bd03be966e39b3b3ffa78421",
+          "version": "1.0.1"
         }
       },
       {
         "package": "XCTestExtensions",
-        "repositoryURL": "https://github.com/elegantchaos/XCTestExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/XCTestExtensions.git",
         "state": {
           "branch": null,
-          "revision": "15991478b5c9bda527a0a59567ad0fa26940f74c",
-          "version": "1.1.2"
+          "revision": "5430aa6447e2b3702fc5b4b3bdbd53bf45a16f86",
+          "version": "1.3.1"
         }
       }
     ]
