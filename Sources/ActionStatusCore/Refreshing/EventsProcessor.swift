@@ -13,6 +13,7 @@ struct EventsProcessor: Processor {
     
     let name = "events list"
     let codes = [200]
+    var processors: [ProcessorBase] { [self] }
 
     func process(_ events: Events, response: HTTPURLResponse, for request: Request, in session: RepoPollingSession) -> RepeatStatus {
         var wasPushed = false
